@@ -1,8 +1,79 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #EAE6DF;
+  --foreground: #292824;
+
+  --surface: #F4F1EB;
+  --surface-subtle: #DFD9CF;
+
+  --card: #F4F1EB;
+  --card-foreground: #292824;
+
+  --popover: #F4F1EB;
+  --popover-foreground: #292824;
+
+  --primary: #292824;
+  --primary-foreground: #EAE6DF;
+
+  --secondary: #DFD9CF;
+  --secondary-foreground: #292824;
+
+  --muted: #DFD9CF;
+  --muted-foreground: #625E56;
+
+  --accent: #8A7058;
+  --accent-foreground: #F4F1EB;
+
+  --destructive: #B91C1C;
+  --destructive-foreground: #F4F1EB;
+
+  --border: #D2CBC0;
+  --surface-border: #D2CBC0;
+  --input: #D2CBC0;
+  --ring: #8A7058;
+
+  --text-primary: #292824;
+  --text-secondary: #625E56;
+
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: #20211F;
+  --foreground: #E9E5DD;
+
+  --surface: #2B2C29;
+  --surface-subtle: #353632;
+
+  --card: #2B2C29;
+  --card-foreground: #E9E5DD;
+
+  --popover: #2B2C29;
+  --popover-foreground: #E9E5DD;
+
+  --primary: #E9E5DD;
+  --primary-foreground: #20211F;
+
+  --secondary: #353632;
+  --secondary-foreground: #E9E5DD;
+
+  --muted: #353632;
+  --muted-foreground: #C4BFB5;
+
+  --accent: #B59B7E;
+  --accent-foreground: #20211F;
+
+  --destructive: #7F1D1D;
+  --destructive-foreground: #E9E5DD;
+
+  --border: #454640;
+  --surface-border: #454640;
+  --input: #454640;
+  --ring: #B59B7E;
+
+  --text-primary: #E9E5DD;
+  --text-secondary: #C4BFB5;
 }
 
 @theme inline {
@@ -10,17 +81,110 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
+  --font-serif: "Playfair Display", "Didot", "Bodoni MT", "Cinzel", "Georgia", "Baskerville", serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-base: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-subtle: var(--surface-subtle);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-surface-border: var(--surface-border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-brand: var(--accent);
+  --color-copy-primary: var(--text-primary);
+  --color-copy-secondary: var(--text-secondary);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 16px);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--background);
+  color: var(--text-primary);
 }
+
+/* Lenis smooth scroll standard styling */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* Micro-interaction animations */
+@keyframes scrollDrift {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(6px);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-scroll-drift {
+  animation: scrollDrift 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scroll-drift {
+    animation: none;
+  }
+}
+
+/* Custom Cursor Desktop Global Override */
+@media (pointer: fine) and (hover: hover) {
+  html.custom-cursor-enabled,
+  html.custom-cursor-enabled body,
+  html.custom-cursor-enabled a,
+  html.custom-cursor-enabled button,
+  html.custom-cursor-enabled [role="button"] {
+    cursor: none !important;
+  }
+}
+
