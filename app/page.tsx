@@ -7,6 +7,7 @@ import { ServicesSection } from "@/components/sections/ServicesSection";
 import { SampleGallery } from "@/components/sections/SampleGallery";
 import { UserFeedback } from "@/components/sections/UserFeedback";
 import { ContactSection } from "@/components/sections/ContactSection";
+import { FooterSection } from "@/components/sections/FooterSection";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 
 export default function Home() {
@@ -25,6 +26,7 @@ export default function Home() {
       <UserFeedback />
 
       <ContactSection />
+      <FooterSection />
     </div>
   );
 }
