@@ -17,10 +17,15 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "ZIVORA — Photography & Videography Portfolio",
-  description: "A cinematic, editorial showcase of photography and videography collections.",
+  description:
+    "A cinematic, editorial showcase of photography and videography collections.",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
@@ -28,17 +33,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-background text-foreground selection:bg-accent selection:text-accent-foreground">
-        <ThemeProvider
+        {/* <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
-        >
-          <SmoothScroll>
-            <Navbar />
-            {children}
-          </SmoothScroll>
-        </ThemeProvider>
+        > */}
+        <SmoothScroll>
+          <Navbar />
+          {children}
+        </SmoothScroll>
+        {/* </ThemeProvider> */}
       </body>
     </html>
   );
