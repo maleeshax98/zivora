@@ -16,7 +16,7 @@ export interface HeroImageItem {
   src: string;
   alt: string;
   title: string;
-  category: string;
+  category?: string;
   aspectRatio?: string;
 }
 
@@ -28,76 +28,6 @@ export interface HeroSectionProps {
   scrollTarget?: string;
   className?: string;
 }
-
-const DEFAULT_CLOUDINARY_IMAGE_URL =
-  "https://res.cloudinary.com/pso8u1zy/image/upload/v1794419553/ij0uyatmtd17wz1jdosz.jpg";
-
-export const DEFAULT_HERO_IMAGES: HeroImageItem[] = [
-  {
-    id: "hero-arch-01",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Warm architectural light casting quiet shadows across limestone surfaces",
-    title: "Monolith I",
-    category: "Architectural Still",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-02",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Minimalist editorial framing with natural textures and subtle shadows",
-    title: "Solstice Forms",
-    category: "Editorial Film",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-03",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Cinematic stillness and geometric stone contours at dusk",
-    title: "Nocturne",
-    category: "Shadow Study",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-04",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Fleeting atmospheric dusk tones and sculptural forms",
-    title: "Vesper Series",
-    category: "35mm Archive",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-05",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Textured linen and natural daylight interplay",
-    title: "Materiality",
-    category: "Brand Narrative",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-06",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Brutalist spatial angles capturing raw daylight",
-    title: "Brutalist Dawn",
-    category: "Spatial Archive",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-07",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Curated composition of reflective glass and stone",
-    title: "Aperture VIII",
-    category: "Film Still",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-08",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Harmonic shadow interplay in modern interior",
-    title: "Zenith Lines",
-    category: "Form Study",
-    aspectRatio: "3 / 4",
-  },
-];
 
 /**
  * Extracts Cloudinary cloud name safely from a Cloudinary URL or falls back to env/default.
@@ -130,7 +60,7 @@ function resolveCloudName(url: string): string {
 export function HeroSection({
   title = "ZIVORA",
   description = "Capturing architectural stillness and fleeting light through intentional frames. An editorial archive of contemporary spaces, material forms, and cinematic narratives.",
-  items = DEFAULT_HERO_IMAGES,
+  items = [],
   className,
 }: HeroSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
@@ -144,6 +74,11 @@ export function HeroSection({
 
   // Split title into individual letter characters
   const letters = useMemo(() => title.split(""), [title]);
+
+  // Active items from props
+  const activeItems = useMemo(() => {
+    return items ?? [];
+  }, [items]);
 
   // Responsive card dimension states
   const [metrics, setMetrics] = useState<{
@@ -177,21 +112,25 @@ export function HeroSection({
           ? windowWidth - 64
           : windowWidth - 128;
 
-    // Dynamically calculate exact number of full images that fit the available width
-    const exactFit = Math.max(
-      1,
-      Math.min(
-        items.length,
-        Math.floor((availableWidth + gap) / (cardWidth + gap)),
-      ),
-    );
+    // Dynamically calculate exact number of full images that fit the available width (capped at 6)
+    const exactFit =
+      activeItems.length > 0
+        ? Math.max(
+            1,
+            Math.min(
+              6,
+              activeItems.length,
+              Math.floor((availableWidth + gap) / (cardWidth + gap)),
+            ),
+          )
+        : 0;
 
     setMetrics({
       cardWidth,
       gap,
       visibleCount: exactFit,
     });
-  }, [items.length]);
+  }, [activeItems.length]);
 
   // Handle ResizeObserver and window resize
   useEffect(() => {
@@ -327,17 +266,19 @@ export function HeroSection({
     }, section);
 
     return () => ctx.revert();
-  }, [letters.length, metrics.visibleCount]);
+  }, [letters.length, metrics.visibleCount, activeItems]);
 
   // Display items:
-  // On desktop/tablet, slice to the exact calculated count fitting the viewport.
+  // On desktop/tablet, slice to the exact calculated count fitting the viewport (capped at 6).
   // On mobile (< 768px), allow up to 4 items in a touch-friendly horizontal scroll track
   // to prevent overflow while giving mobile users fluid swipe access.
   const isMobileViewport =
     typeof window !== "undefined" ? window.innerWidth < 768 : false;
-  const displayedItems = items.slice(
+  const displayedItems = activeItems.slice(
     0,
-    isMobileViewport ? Math.min(items.length, 4) : metrics.visibleCount,
+    isMobileViewport
+      ? Math.min(activeItems.length, 4)
+      : Math.min(6, metrics.visibleCount),
   );
 
   return (
@@ -456,12 +397,16 @@ export function HeroSection({
 
               {/* Subtle Editorial Gradient & Caption on Hover */}
               <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-background/95 via-background/30 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 rounded-none">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-copy-primary font-medium">
-                  {item.title}
-                </span>
-                <span className="font-mono text-[9px] uppercase tracking-wider text-copy-secondary">
-                  {item.category}
-                </span>
+                {item.title && (
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-copy-primary font-medium">
+                    {item.title}
+                  </span>
+                )}
+                {item.category && (
+                  <span className="font-mono text-[9px] uppercase tracking-wider text-copy-secondary">
+                    {item.category}
+                  </span>
+                )}
               </div>
             </div>
           ))}

@@ -11,7 +11,7 @@ export interface ServiceItem {
   number: string;
   title: string;
   subtitle?: string;
-  description: string;
+  description?: string;
   deliverables?: string[];
   imageUrl: string;
   imageAlt: string;
@@ -25,76 +25,6 @@ export interface ServicesSectionProps {
   services?: ServiceItem[];
   className?: string;
 }
-
-const DEFAULT_SERVICE_IMAGE_URL =
-  "https://res.cloudinary.com/pso8u1zy/image/upload/v1794419553/ij0uyatmtd17wz1jdosz.jpg";
-
-const DEFAULT_SERVICES: ServiceItem[] = [
-  {
-    id: "editorial-photography",
-    number: "01",
-    title: "Editorial Photography",
-    subtitle: "Portraits & Architecture",
-    description:
-      "Unhurried portrait and architectural stills composed around natural light, quiet gesture, and tactile medium-format clarity.",
-    deliverables: [
-      "Medium-Format Stills",
-      "Natural Light Choreography",
-      "Tactile Spatial Stillness",
-    ],
-    imageUrl: DEFAULT_SERVICE_IMAGE_URL,
-    imageAlt:
-      "Editorial photography study showcasing atmospheric natural light and architectural stillness",
-  },
-  {
-    id: "cinematic-videography",
-    number: "02",
-    title: "Cinematic Videography",
-    subtitle: "Motion & Sound",
-    description:
-      "Measured motion studies and short-form films shaped by deliberate camera movement, pacing, and atmospheric sound design.",
-    deliverables: [
-      "4K Filmic Motion Sequences",
-      "Analog Color Science",
-      "Atmospheric Soundscapes",
-    ],
-    imageUrl: DEFAULT_SERVICE_IMAGE_URL,
-    imageAlt:
-      "Cinematic videography frame capturing moody shadow depth and filmic color grading",
-  },
-  {
-    id: "brand-narratives",
-    number: "03",
-    title: "Brand Narratives",
-    subtitle: "Visual Identity",
-    description:
-      "Cohesive visual identities for studios, hospitality, and design houses—translating craft and philosophy into enduring imagery.",
-    deliverables: [
-      "Visual Identity Architecture",
-      "Editorial Campaign Direction",
-      "Long-Form Design Storytelling",
-    ],
-    imageUrl: DEFAULT_SERVICE_IMAGE_URL,
-    imageAlt:
-      "Brand narrative campaign photograph blending architectural form and warm minimal styling",
-  },
-  {
-    id: "creative-direction",
-    number: "04",
-    title: "Creative Direction",
-    subtitle: "Art & Curation",
-    description:
-      "End-to-end visual curation from treatment and location scouting through set styling, color grading, and final publication.",
-    deliverables: [
-      "Visual Treatments & Curation",
-      "Spatial & Location Scouting",
-      "Comprehensive Print & Screen Delivery",
-    ],
-    imageUrl: DEFAULT_SERVICE_IMAGE_URL,
-    imageAlt:
-      "Creative direction visual study emphasizing editorial composition and refined spatial restraint",
-  },
-];
 
 function resolveCloudName(src: string): string {
   const match = src.match(/^https?:\/\/res\.cloudinary\.com\/([^/]+)\//i);
@@ -115,9 +45,14 @@ function resolveCloudName(src: string): string {
  * - Architecture: Direct export from components/sections/ServicesSection.tsx (zero barrel files).
  */
 export function ServicesSection({
-  services = DEFAULT_SERVICES,
+  services = [],
   className,
 }: ServicesSectionProps) {
+  const activeServices = React.useMemo(
+    () => services ?? [],
+    [services],
+  );
+
   const sectionUid = useId();
   const headingId = `${sectionUid}-heading`;
 
@@ -136,7 +71,7 @@ export function ServicesSection({
     const section = sectionRef.current;
     const progressBar = progressBarRef.current;
     const cards = cardRefs.current
-      .slice(0, services.length)
+      .slice(0, activeServices.length)
       .filter((el): el is HTMLDivElement => el !== null);
 
     if (!section || cards.length === 0) return;
@@ -290,7 +225,7 @@ export function ServicesSection({
       scrollTriggerRef.current = null;
       mm.revert();
     };
-  }, [services.length]);
+  }, [activeServices.length]);
 
   const handleTabClick = (index: number) => {
     const st = scrollTriggerRef.current;
@@ -304,7 +239,7 @@ export function ServicesSection({
       return;
     }
 
-    const progressRatio = index / Math.max(1, services.length - 1);
+    const progressRatio = index / Math.max(1, activeServices.length - 1);
     const targetScroll = st.start + progressRatio * (st.end - st.start);
 
     const lenis = getLenis();
@@ -315,7 +250,7 @@ export function ServicesSection({
     }
   };
 
-  if (services.length === 0) {
+  if (activeServices.length === 0) {
     return null;
   }
 
@@ -341,7 +276,7 @@ export function ServicesSection({
               aria-label="Services discipline selection"
               className="no-scrollbar touch-pan-x flex flex-wrap items-center gap-6 overflow-x-auto py-1 sm:gap-8 md:gap-10"
             >
-              {services.map((service, index) => {
+              {activeServices.map((service, index) => {
                 const isActive = activeIndex === index;
                 return (
                   <button
@@ -401,7 +336,7 @@ export function ServicesSection({
             "motion-reduce:my-10 motion-reduce:min-h-0 motion-reduce:flex-col motion-reduce:gap-20",
           )}
         >
-          {services.map((service, index) => {
+          {activeServices.map((service, index) => {
             return (
               <div
                 key={service.id}
@@ -427,25 +362,29 @@ export function ServicesSection({
                   </div>
 
                   {/* Middle Column: Concise editorial description block */}
-                  <div className="flex flex-col justify-center space-y-3 text-center sm:space-y-4 md:col-span-4 md:text-left lg:col-span-4">
-                    <p className="text-[clamp(0.9rem,0.86rem+0.2vw,1.0625rem)] leading-relaxed text-copy-secondary text-pretty">
-                      {service.description}
-                    </p>
+                  {service.description ? (
+                    <div className="flex flex-col justify-center space-y-3 text-center sm:space-y-4 md:col-span-4 md:text-left lg:col-span-4">
+                      <p className="text-[clamp(0.9rem,0.86rem+0.2vw,1.0625rem)] leading-relaxed text-copy-secondary text-pretty">
+                        {service.description}
+                      </p>
 
-                    {service.deliverables && service.deliverables.length > 0 ? (
-                      <ul className="flex flex-wrap justify-center gap-2 border-t border-surface-border/60 pt-3 md:flex-col md:justify-start">
-                        {service.deliverables.map((item) => (
-                          <li
-                            key={item}
-                            className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-copy-secondary/80"
-                          >
-                            <span className="h-1 w-1 rounded-full bg-brand" />
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : null}
-                  </div>
+                      {service.deliverables && service.deliverables.length > 0 ? (
+                        <ul className="flex flex-wrap justify-center gap-2 border-t border-surface-border/60 pt-3 md:flex-col md:justify-start">
+                          {service.deliverables.map((item) => (
+                            <li
+                              key={item}
+                              className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.16em] text-copy-secondary/80"
+                            >
+                              <span className="h-1 w-1 rounded-full bg-brand" />
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="hidden md:flex md:col-span-4 lg:col-span-4" />
+                  )}
 
                   {/* Right Column: Cinematic preview image using shared CldImage */}
                   <div className="flex items-center justify-center md:col-span-4 lg:col-span-4">

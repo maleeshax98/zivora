@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { Navbar } from "@/components/layout/Navbar";
+import { SanityLive } from "@/lib/sanity/live";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <Navbar />
             {children}
           </SmoothScroll>
+          <SanityLive />
         </ThemeProvider>
       </body>
     </html>

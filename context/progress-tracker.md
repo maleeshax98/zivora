@@ -4,13 +4,100 @@ Update this file whenever the current phase, active feature, or implementation s
 
 ## Current Phase
 
-Phase 1: Foundation & Core Design System
+Phase 2: CMS Integration & Content Modeling
 
 ## Current Goal
 
-Remote repository configured (`https://github.com/maleeshax98/zivora.git`); code staged, verified, and committed for primary deployment.
+Sanity CMS Studio schemas (`category` & `album`) defined, deployed to Content Lake, and connected to Next.js application (`zivora`) with type-safe query layer and TypeGen automation.
 
 ## Completed
+
+- Fetch Feedbacks from Sanity & Show in UserFeedback Section (`zivora/context/backend/05-fetch-feedbacks.md`)
+  - Studied `feedback` schema in `studio/schemaTypes/feedback.ts` (`name`, `tag`, `feedback`, `imageUrl`, `publishedAt`) and existing documents in Content Lake
+  - Added preview selection block to `studio/schemaTypes/feedback.ts` displaying client name and tag in Studio document list
+  - Defined `FEEDBACKS_QUERY` using `defineQuery` in `zivora/lib/sanity/queries.ts` selecting `_id`, `name`, `tag`, `feedback`, `imageUrl`, and `publishedAt` ordered by `publishedAt desc, _createdAt desc` with `[0...5]` slice
+  - Re-extracted schema and regenerated type-safe definitions in `zivora/sanity.types.ts` via `sanity typegen generate`, creating typed `FEEDBACKS_QUERY_RESULT` and client overloads
+  - Removed hardcoded sample data (`DEFAULT_FEEDBACK_CARDS`) from `zivora/components/sections/UserFeedback.tsx` so the component defaults to empty array and renders `null` when no feedbacks are present
+  - Built adaptive responsive layout system in `UserFeedback.tsx` supporting 1 to 5 cards with customized coordinate and rotation presets (`RESPONSIVE_LAYOUT_PRESETS`), dynamically scaling the overview camera bounding box, timeline duration (`end`), and viewfinder HUD telemetry
+  - Added support for client avatar/commission image rendering via `next-cloudinary` (`CldImage`) with fallback for non-Cloudinary images (`next/image` with `unoptimized`)
+  - Implemented cached loader `getFeedbacks()` in `zivora/app/page.tsx` using Next.js 16 `"use cache"` and wrapped `<UserFeedbackAsync />` in `<Suspense fallback={<UserFeedback />}>`
+  - Fixed premature unpinning & camera transition issue: restored proper section placement in `app/page.tsx` (mounted after `<SampleGallery />` and before `<ContactSection />`), added immediate + `requestAnimationFrame` `ScrollTrigger.refresh()` on mount, tuned `scrollEnd` runway (`+=460%` desktop / `+=360%` mobile), added final card `exit-hold`, and trimmed `cardElementsRef.current` to ensure all cards (1 to 5) transition seamlessly with unhurried reading holds
+  - Verified static compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and Sanity Studio build (`sanity build`)
+
+- Fetch and Show Sample Gallery Images from Cloudinary (`zivora/context/backend/04-fetch-sample-gallery.md`)
+  - Calculated optimal gallery capacity: 16 images architected around the 16 curated spatial positions of the desktop floating stage (5-column parallax scatter across `h-[175vh]–[200vh]`) and mobile 2-column grid (8 balanced pairs)
+  - Implemented `getSampleGalleryImages()` and `calculateTargetGalleryImageCount()` in `zivora/lib/cd.ts` using the Cloudinary Search API querying `(folder:SAMPLE-GALLERY* OR asset_folder:SAMPLE-GALLERY*) AND resource_type:image` sorted by `created_at desc`
+  - Added clean resource mapping to `SampleGalleryItem` extracting Cloudinary `secure_url`, generated editorial `imageAlt`, dimensions, and aspect ratio
+  - Integrated cached data loader `getSampleGallery()` in `zivora/app/page.tsx` using Next.js 16 `"use cache"` directive and wrapped `<SampleGalleryAsync />` in `<Suspense fallback={<SampleGallery />}>` for fast static prerendering and instant fallback with zero layout shift (CLS)
+  - Added defensive handling in `lib/cd.ts` and `SampleGallery.tsx` gracefully falling back to preconfigured items if Cloudinary API key has restricted permissions (`actions=["read"]`) or folder is empty
+  - Verified static compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`pnpm build`) with static page generation confirming executed Cloudinary search query
+
+- Remove Sample Data from Hero, Featured Work, and Services Sections (`zivora/components/hero/HeroSection.tsx`, `zivora/components/sections/FeaturedWork.tsx`, `zivora/components/sections/ServicesSection.tsx`, `zivora/app/page.tsx`)
+  - Cleaned all hardcoded sample data arrays (`DEFAULT_HERO_IMAGES`, `DEFAULT_FEATURED_PROJECTS`, `DEFAULT_SERVICES`) and sample image constants (`DEFAULT_CLOUDINARY_IMAGE_URL`, `FEATURED_THUMBNAIL_URL`, `DEFAULT_SERVICE_IMAGE_URL`) from component files without modifying or deleting documents in the Sanity database
+  - Removed hardcoded category text fallbacks (`CATEGORY_EDITORIAL_DEFAULTS`, `DEFAULT_CATEGORY_FALLBACK`) from `app/page.tsx`, directly rendering authentic CMS-managed data (`category.description`) or clean empty states
+  - Updated `HeroSection.tsx`: default `items = []`, `activeItems = useMemo(() => items ?? [], [items])`, dynamic layout metrics calculation adapted for empty/loaded states, hover captions guarded to only show defined titles and categories
+  - Updated `FeaturedWork.tsx`: default `items = []`, `activeItems = useMemo(() => items ?? [], [items])`, clean `null` return when no featured albums are present
+  - Updated `ServicesSection.tsx`: default `services = []`, `activeServices = React.useMemo(() => services ?? [], [services])`, clean `null` return when no services are present, middle column editorial description guarded to avoid rendering empty tags
+  - Updated `app/page.tsx`: async loaders (`getHeroImages`, `getFeaturedWorks`, `getCategories`) return clean arrays `[]` on empty/error rather than falling back to fake sample objects
+  - Verified compilation with `pnpm tsc --noEmit`, ESLint (`pnpm lint`), and Next.js production build (`pnpm build`) passing with zero errors
+
+- Fetch and Show Categories in Home Page (`zivora/context/backend/03-fetch-categories.md`)
+  - Studied `category` schema in `studio/schemaTypes/category.ts` (`title`, `slug`, `description`, `coverImage`, `publishedAt`)
+  - Defined `CATEGORIES_QUERY` in `zivora/lib/sanity/queries.ts` selecting `_id`, `title`, `slug`, `description`, `coverImage`, and `publishedAt` ordered by `publishedAt asc, _createdAt asc`
+  - Re-extracted studio schema and regenerated type-safe query definitions in `zivora/sanity.types.ts` via `sanity typegen generate`, creating typed `CATEGORIES_QUERY_RESULT` and client overloads
+  - Added defensive `activeServices` memoization in `ServicesSection.tsx` to automatically fall back to `DEFAULT_SERVICES` if `services` is empty array or undefined, preventing broken layouts or CLS
+  - Implemented cached loader `getCategories()` in `zivora/app/page.tsx` using Next.js 16 `"use cache"` and `sanityFetch({ query: CATEGORIES_QUERY })`, mapping category documents to `ServiceItem[]` with PortableText extraction and editorial fallbacks
+  - Wrapped `<ServicesSectionAsync />` in `<Suspense fallback={<ServicesSection />}>` in `zivora/app/page.tsx` for fast streaming, static prerendering, and instant fallback with zero layout shift (CLS)
+  - Verified live Sanity Content Lake query returning all 3 categories (`Wedding Photography`, `Birthday Shoot`, `Portrait Photography`) with Cloudinary cover URLs
+  - Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and Sanity Studio build (`sanity build`)
+
+- Fetch and Show Featured Works in Home Page (`zivora/context/backend/02-fetch-featured-works.md`)
+  - Studied `album` schema in `studio/schemaTypes/album.ts`, identifying the `featured: boolean` field
+  - Defined `FEATURED_ALBUMS_QUERY` using `defineQuery` in `zivora/lib/sanity/queries.ts` selecting `_id`, `title`, `slug`, `category->`, `eventDate`, `publishedAt`, `coverImage`, and `featured` ordered by `publishedAt desc, _createdAt desc`
+  - Re-extracted schema to `studio/schema.json` and generated type-safe query definitions in `zivora/sanity.types.ts` via `sanity typegen generate`, creating typed `FEATURED_ALBUMS_QUERY_RESULT` and client overloads
+  - Added defensive `activeItems` memoization in `FeaturedWork.tsx` to automatically fall back to `DEFAULT_FEATURED_PROJECTS` if `items` is empty array or undefined
+  - Implemented cached loader `getFeaturedWorks()` in `zivora/app/page.tsx` using Next.js 16 `"use cache"` and `sanityFetch({ query: FEATURED_ALBUMS_QUERY })`, mapping documents to `FeaturedProjectItem[]`
+  - Wrapped `<FeaturedWorkAsync />` in `<Suspense fallback={<FeaturedWork />}>` in `zivora/app/page.tsx` for fast streaming, static prerendering, and instant fallback with zero layout shift (CLS)
+  - Verified live Sanity Content Lake query returning all 4 featured albums (`Album-4`, `Album 3`, `Album 2`, `Album 1`) with Cloudinary cover URLs
+  - Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and Sanity Studio build (`sanity build`)
+
+- Limit Hero Images to 6 (`zivora/lib/sanity/queries.ts`, `HeroSection.tsx`, `app/page.tsx`)
+  - Updated `HERO_IMAGES_QUERY` with GROQ slice `[0...6]` to strictly limit fetch size
+  - Regenerated Sanity TypeGen in `studio/` so query types match `[0...6]` slice
+  - Enforced `Math.min(6, ...)` cap in `HeroSection.tsx` for `exactFit` and `displayedItems` so no more than 6 images are rendered regardless of viewport width
+  - Added `.slice(0, 6)` in `app/page.tsx` as an additional layer of defensive capping
+  - Verified static compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build
+
+- Sanity Live Updates Integration (`next-sanity/live` & Live Content API)
+  - Configured CORS origins in Sanity project `xu3rhmio` (`http://localhost:3000` with `allowCredentials: true`) to permit live SSE client-side streaming
+  - Created `zivora/lib/sanity/live.ts` exporting `sanityFetch` and `SanityLive` using `defineLive` from `next-sanity/live`
+  - Mounted `<SanityLive />` in `zivora/app/layout.tsx` inside `<ThemeProvider>` to establish real-time SSE listener
+  - Updated `zivora/app/page.tsx` data fetching in `getHeroImages()` to use `sanityFetch({ query: HERO_IMAGES_QUERY })`
+  - Documented `SANITY_API_READ_TOKEN` in `zivora/.env.example`
+  - Verified static compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and SSR HTML output confirming `SanityLive` client component registration
+
+- Hero Images Sanity CMS Integration (`zivora/context/backend/01-fetch-hero-images.md`)
+  - Studied schema definition `studio/schemaTypes/heroImages.ts` (`title`, `slug`, `coverImage`, `publishedAt`)
+  - Extracted studio schema to `studio/schema.json` and defined `HERO_IMAGES_QUERY` using `defineQuery` in `zivora/lib/sanity/queries.ts`
+  - Regenerated TypeScript types via `sanity typegen generate` into `zivora/sanity.types.ts`, creating typed `HERO_IMAGES_QUERY_RESULT` with client overload mappings
+  - Updated `HeroSection.tsx` (`activeItems`) with defensive fallback to `DEFAULT_HERO_IMAGES` if empty array or undefined is passed, preserving dynamic card width calculation and GSAP master blur-to-clear entrance animations
+  - Created cached loader `getHeroImages()` in `zivora/app/page.tsx` using Next.js 16 `"use cache"` directive and wrapped `<HeroSectionAsync />` in `<Suspense fallback={<HeroSection />}>` for partial prerendering and streaming
+  - Verified live data fetch via Sanity Client connecting to Content Lake (`xu3rhmio`, dataset `production`), retrieving all 6 hero documents with full Cloudinary URLs
+  - Verified static compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and Sanity Studio build (`sanity build`)
+
+- Sanity CMS Setup & Next.js Integration (`studio/context/01-initial.md` & `sanity-best-practices` skill)
+  - Installed `sanity-best-practices` agent toolkit skill in `.agents/skills/sanity-best-practices`
+  - Created Category schema type (`studio/schemaTypes/category.ts`) with `title`, `slug`, `description` (Portable Text), `coverImage` (Cloudinary URL string), and `publishedAt`
+  - Created Album schema type (`studio/schemaTypes/album.ts`) with `title`, `slug`, `description` (Portable Text), `eventDate`, `category` (Reference to `category`), `cloudinaryFolderName`, `coverImage` (Cloudinary URL string), `youtubeVideoLinks` (Array of URLs), and `publishedAt`
+  - Registered schema types in `studio/schemaTypes/index.ts` and configured custom Studio preview blocks
+  - Configured `studio/sanity.cli.ts` with automated TypeGen targeting `../zivora/{app,components,lib}/**/*.{ts,tsx,js,jsx}` with `overloadClientMethods: true`
+  - Deployed schemas to Sanity Content Lake (`xu3rhmio`, dataset `production`) and verified with Sanity MCP tools
+  - Installed `next-sanity`, `@sanity/image-url`, and `@sanity/client` in `zivora` via pnpm
+  - Configured environment variables in `zivora/.env` and `zivora/.env.example` (`NEXT_PUBLIC_SANITY_PROJECT_ID`, `NEXT_PUBLIC_SANITY_DATASET`, `NEXT_PUBLIC_SANITY_API_VERSION`)
+  - Created Sanity client helper (`zivora/lib/sanity/client.ts`), Image URL builder (`zivora/lib/sanity/image.ts`), and typed GROQ queries (`zivora/lib/sanity/queries.ts`)
+  - Automated TypeGen generation (`sanity typegen generate`) into `zivora/sanity.types.ts` with full type mapping for schemas and queries
+  - Updated ESLint configuration to ignore generated `sanity.types.ts`
+  - Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and Sanity Studio build (`sanity build`)
 
 - Feature Spec 15: Footer Section (`context/feature-specs/11-footer.md`)
   - Created `components/sections/FooterSection.tsx` (`"use client"`) with direct named exports (`FooterSection`, `Footer`, `FooterSectionProps`) and default export (strictly zero barrel files)
@@ -218,13 +305,28 @@ Remote repository configured (`https://github.com/maleeshax98/zivora.git`); code
 
 - Album Layout & Masonry Grid (or next approved feature)
 
-- Album Layout & Masonry Grid (or next approved feature)
-
 ## Open Questions
 
 - None.
 
 ## Architecture Decisions
+
+- Connected Sanity `feedback` documents to `UserFeedback` via Next.js 16 `"use cache"` and `sanityFetch({ query: FEEDBACKS_QUERY })` wrapped in `<Suspense fallback={<UserFeedback />}>`. Sized the query limit to 5 items (`[0...5]`) ordered by `publishedAt desc, _createdAt desc`. Removed hardcoded mock array `DEFAULT_FEEDBACK_CARDS` from `UserFeedback.tsx` to ensure zero stale mock data in codebase files.
+- Built an adaptive responsive layout system for `UserFeedback`:
+  - Dynamically assigns non-overlapping coordinates, rotations, and zoom scales for any card count between 1 and 5 (`RESPONSIVE_LAYOUT_PRESETS`).
+  - Sets an adaptive overview scale ceiling (`maxOverviewScale`) so 1 or 2 cards fill the camera viewport with presence (~0.60–0.72 scale) rather than being stranded at wide-angle 0.42 scale.
+  - Dynamically adjusts timeline duration/pin length (`end`) based on `activeCards.length` so fewer cards don't force excessive scrolling.
+  - Automatically calculates step progress and displays synchronized HUD viewfinder telemetry (`[ ALL / 02 ] — OVERVIEW`, `[ 01 / 02 ] — Sakkili Miya`, etc.).
+  - Added support for client avatar/commission image rendering in card footers via `CldImage` (Cloudinary URLs) and `next/image` (`unoptimized` for non-Cloudinary images).
+
+
+- Connected Cloudinary Search API to `SampleGallery` via `getSampleGalleryImages()` in `lib/cd.ts` and Next.js 16 `"use cache"` in `app/page.tsx` wrapped in `<Suspense fallback={<SampleGallery />}>`. Calculated target capacity as 16 items to perfectly populate the 16 predefined floating positions on desktop (5 horizontal bands) and 8 balanced pairs on mobile without visual voids. Configured search expression `(folder:SAMPLE-GALLERY* OR asset_folder:SAMPLE-GALLERY*) AND resource_type:image` to support both legacy folder hierarchies and Cloudinary dynamic asset folders. Added defensive warning and fallback in case the Cloudinary API access key is missing `actions=["read"]` permissions.
+
+- Connected Sanity `category` documents to `ServicesSection` on the home page via Next.js 16 `"use cache"` and `sanityFetch({ query: CATEGORIES_QUERY })` wrapped in `<Suspense fallback={<ServicesSection />}>`. Preserved defensive fallback to `DEFAULT_SERVICES` in `ServicesSection.tsx` so missing or empty category arrays do not cause layout shifts or empty UI. Ordered categories by `publishedAt asc, _createdAt asc` to preserve the user's sequential discipline ordering (`Wedding Photography`, `Birthday Shoot`, `Portrait Photography`).
+- Built `FeaturedWork` integration with Next.js 16 `"use cache"` and `sanityFetch({ query: FEATURED_ALBUMS_QUERY })` wrapped in `<Suspense fallback={<FeaturedWork />}>`. Preserved defensive fallback to `DEFAULT_FEATURED_PROJECTS` in `FeaturedWork.tsx` so missing or empty album arrays do not cause layout shifts or empty UI. Ordered featured albums by `publishedAt desc, _createdAt desc` with deterministic year extraction from `eventDate` / `publishedAt` avoiding dynamic `new Date()` calls during static prerendering.
+- Configured Sanity Live Content API via `defineLive` (`next-sanity/live`) with `<SanityLive />` mounted in `app/layout.tsx` and `sanityFetch` in server data loaders. Configured CORS credentials on Sanity project `xu3rhmio` for `http://localhost:3000` to support local real-time SSE listener updates.
+- Configured Next.js 16 Cache Components with `"use cache"` directive and `<Suspense fallback={<HeroSection />}>` boundary for dynamic Sanity Content Lake data fetching in `app/page.tsx`, enabling fast static prerendering, streaming, automated 15m revalidation, and graceful fallback to defaults if offline or build-time network is absent.
+- Preserved defensive `activeItems` memoization in `HeroSection.tsx` so empty arrays or undefined passed to `items` automatically fall back to `DEFAULT_HERO_IMAGES`, ensuring zero broken layouts or layout shift (CLS).
 
 - Dual-theme tokens mapped to Tailwind CSS variables (`--background`, `--surface`, `--surface-subtle`, `--text-primary`, `--text-secondary`, `--border`, `--accent`, etc.) alongside shadcn design tokens.
 - Lenis smooth scrolling integrated via a lightweight client provider mounted in the root layout, with touch/accessibility preservation and cleanup.

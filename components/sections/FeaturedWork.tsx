@@ -21,52 +21,6 @@ export interface FeaturedWorkProps {
   className?: string;
 }
 
-const FEATURED_THUMBNAIL_URL =
-  "https://res.cloudinary.com/pso8u1zy/image/upload/v1794419553/ij0uyatmtd17wz1jdosz.jpg";
-
-const DEFAULT_FEATURED_PROJECTS: FeaturedProjectItem[] = [
-  {
-    id: "nocturne-in-stone",
-    title: "Nocturne in Stone",
-    category: "Architectural Study",
-    year: "2026",
-    imageUrl: FEATURED_THUMBNAIL_URL,
-    imageAlt:
-      "Architectural light and shadow composition from the Nocturne in Stone series",
-    href: "/works",
-  },
-  {
-    id: "solstice-forms",
-    title: "Solstice Forms",
-    category: "Editorial Film & Stills",
-    year: "2026",
-    imageUrl: FEATURED_THUMBNAIL_URL,
-    imageAlt:
-      "Cinematic minimalist framing from the Solstice Forms portfolio series",
-    href: "/works",
-  },
-  {
-    id: "solstice-forms2",
-    title: "Solstice Forms",
-    category: "Editorial Film & Stills",
-    year: "2026",
-    imageUrl: FEATURED_THUMBNAIL_URL,
-    imageAlt:
-      "Cinematic minimalist framing from the Solstice Forms portfolio series",
-    href: "/works",
-  },
-  {
-    id: "solstice-forms3",
-    title: "Solstice Forms",
-    category: "Editorial Film & Stills",
-    year: "2026",
-    imageUrl: FEATURED_THUMBNAIL_URL,
-    imageAlt:
-      "Cinematic minimalist framing from the Solstice Forms portfolio series",
-    href: "/works",
-  },
-];
-
 function resolveCloudName(src: string): string {
   const match = src.match(/^https?:\/\/res\.cloudinary\.com\/([^/]+)\//i);
   if (match?.[1]) {
@@ -92,14 +46,18 @@ function chunkIntoPairs(
  * Smoothly fades out the section title as the initial pair enters to fill the viewport.
  */
 export function FeaturedWork({
-  items = DEFAULT_FEATURED_PROJECTS,
+  items = [],
   className,
 }: FeaturedWorkProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const firstRowRef = useRef<HTMLUListElement>(null);
 
-  const rows = useMemo(() => chunkIntoPairs(items), [items]);
+  const activeItems = useMemo(() => {
+    return items ?? [];
+  }, [items]);
+
+  const rows = useMemo(() => chunkIntoPairs(activeItems), [activeItems]);
 
   useEffect(() => {
     const section = sectionRef.current;

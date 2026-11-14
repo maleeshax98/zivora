@@ -422,7 +422,9 @@ const DEFAULT_FLOATING_PHOTOS: FloatingPhotoConfig[] = [
   },
 ];
 
-export function SampleGallerySkeleton({ className }: SampleGallerySkeletonProps) {
+export function SampleGallerySkeleton({
+  className,
+}: SampleGallerySkeletonProps) {
   return (
     <div
       role="status"
