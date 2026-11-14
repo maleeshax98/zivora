@@ -6,6 +6,7 @@ import { ConsistencyBreakText } from "@/components/sections/ConsistencyBreakText
 import { ServicesSection } from "@/components/sections/ServicesSection";
 import { SampleGallery } from "@/components/sections/SampleGallery";
 import { UserFeedback } from "@/components/sections/UserFeedback";
+import { ContactSection } from "@/components/sections/ContactSection";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 
 export default function Home() {
@@ -22,6 +23,8 @@ export default function Home() {
       <ServicesSection />
       <SampleGallery />
       <UserFeedback />
+
+      <ContactSection />
     </div>
   );
 }
