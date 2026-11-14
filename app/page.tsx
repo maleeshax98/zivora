@@ -14,9 +14,9 @@ export default function Home() {
   return (
     <div className="relative min-h-screen flex flex-col bg-background text-foreground">
       {/* Custom Trailing Mouse Cursor */}
-      <CustomCursor />
+      {/* <CustomCursor /> */}
       <HeroSection />
-      <AboutSection />
+      {/* <AboutSection />
       <CinematicText />
       <FeaturedWork />
       <ConsistencyBreakText />
@@ -26,7 +26,7 @@ export default function Home() {
       <UserFeedback />
 
       <ContactSection />
-      <FooterSection />
+      <FooterSection /> */}
     </div>
   );
 }
