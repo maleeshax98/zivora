@@ -777,6 +777,178 @@
 - Verified TypeScript compilation (`tsc --noEmit`), linting (`eslint`), and production build (`next build --webpack`).
 - Staged and committed the codebase, configured remote `origin` to `https://github.com/maleeshax98/zivora.git`, and prepared push to `main`.
 
+## Session: 2026-11-14 — Feature Spec 09 / 13: User Feedback Section
+
+### 1. Session Summary
+
+- Read `context/feature-specs/09-user-feedback.md` and updated `context/progress-tracker.md` to mark this feature as in-progress.
+- Implemented `components/sections/UserFeedback.tsx` (`"use client"`) with direct named and default exports (strictly zero barrel files):
+  - Created a full-viewport container (`h-[100dvh] min-h-[100dvh]`) designed as an architectural wall background with subtle coordinate lines and watermarks (`WALL SURFACE // 09`, `FIG. 13 — WIND PHYSICS`).
+  - Centered a tactile "sticky card" testimonial focal point styled with dual-theme design tokens, sharp edges (`rounded-none`), subtle border (`border-surface-border/90`), deep paper drop shadow (`shadow-[0_18px_45px_...]`), top simulated tape mark, fluid typography (`clamp()`), and verified client citation details.
+  - Implemented GSAP `ScrollTrigger` viewport pinning (`start: "top top"`, `pin: true`, `pinSpacing: true`, `anticipatePin: 1`, `scrub: 0.8` desktop / `0.6` mobile): holds card for initial reading (beat 1), then smoothly executes a physics-based wind-swept animation (beat 2) blowing the card off-screen to the right with dynamic rotation (`22deg`), vertical draft lift (`y: -54`), and opacity ease (`power2.in`).
+  - Ensured fluid mobile scaling: card dimensions and typography adapt smoothly to touch devices without overflowing `100dvh` bounds.
+  - Implemented accessible static fallback for `prefers-reduced-motion: reduce` rendering the card statically in view without pinning or wind transforms.
+  - Mounted `<UserFeedback />` in `app/page.tsx` directly after `<SampleGallery />` with zero changes to any other sections per specification constraint.
+- Statically verified with `pnpm exec tsc --noEmit` (0 errors), `pnpm run lint` (0 errors, 0 warnings), `pnpm run build` (`next build --webpack`, static prerendering successful), and inspected `.next/server/app/index.html` confirming SSR output.
+- Updated `context/progress-tracker.md` to mark the feature completed.
+
+### 2. Architectural & Engineering Decisions
+
+- **Sticky Card Concept & Physical Paper Tactility:**
+  - Designed the testimonial card to feel distinctly physical and pinned to the background "wall":
+    - Surface: Uses `bg-surface` (`#F4F1EB` Warm Light / `#2B2C29` Cinematic Dark) with `border border-surface-border/90` and sharp editorial corners (`rounded-none`).
+    - Tactile Tape: Simulated translucent adhesive tape strip centered at the top edge (`bg-surface-subtle/80 backdrop-blur-[2px] border-t border-b border-surface-border/70 rotate-[-1deg]`).
+    - Shadow: Strong, layered elevation shadow (`shadow-[0_18px_45px_rgba(41,40,36,0.14)] dark:shadow-[0_24px_55px_rgba(0,0,0,0.55)]`) separating the card from the wall surface.
+- **Wind Physics Motion Choreography:**
+  - Used `gsap.matchMedia(sectionRef.current)` + `ScrollTrigger` timeline with `pin: true`, `pinSpacing: true`, `scrub: 0.8` desktop / `0.6` mobile, `anticipatePin: 1`:
+    - Beat 1 (progress `0 -> 0.3`): Deliberate reading hold with subtle air flutter (`rotation: -1.2 -> 0.8`, `y: -6`).
+    - Beat 2 (progress `0.3 -> 1.0`): Wind sweep to the right. The card is caught by the wind, tilts dynamically (`rotation: 22`), lifts in the draft (`y: -54`), and accelerates off-screen to the right (`x: getExitDistance()`, `opacity: 0`, `ease: "power2.in"`).
+  - Calculated exit distance dynamically (`Math.max(windowWidth * 0.95, cardWidth + 300)`) and ensured `overflow-hidden` on the section container so sweeping off-screen never causes horizontal window overflow or scrollbar flicker.
+- **Accessibility & Reduced Motion:**
+  - Scoped GSAP logic inside `gsap.matchMedia(sectionRef.current)`. When `prefers-reduced-motion: reduce` is detected, pinning and wind sweep transforms are bypassed, clearing all transforms so the card remains statically visible and centered in view.
+- **Strict Component Scope & Zero Changes to Other Sections:**
+  - Mounted `<UserFeedback />` in `app/page.tsx` following `<SampleGallery />`.
+  - Zero modifications made to existing sections (`HeroSection`, `AboutSection`, `CinematicText`, `FeaturedWork`, `ConsistencyBreakText`, `ServicesSection`, `SampleGallery`).
+
+### 3. Implementation State
+
+- `components/sections/UserFeedback.tsx`: Created with sticky card styling, GSAP wind physics scrub, and reduced-motion fallback.
+- `app/page.tsx`: Updated with direct import and mounting of `<UserFeedback />`.
+- `context/progress-tracker.md`: Updated to completed.
+- `memory/memory.md`: Updated and verified saved.
+- Verification:
+  - `pnpm -C zivora exec tsc --noEmit` (0 errors).
+  - `pnpm -C zivora run lint` (0 errors, 0 warnings).
+  - `pnpm -C zivora run build` (`next build --webpack` compiled in 993ms, 0 errors; inspected `.next/server/app/index.html` confirming SSR output of `#feedback`, sticky card markup, quote text, author attribution, zero barrel files in `components/`, and zero modifications to any other sections).
+
+### 4. Continuation Context & Next Steps
+
+- Homepage currently mounts:
+  1. `<HeroSection />`
+  2. `<AboutSection />`
+  3. `<CinematicText />`
+  4. `<FeaturedWork />`
+  5. `<ConsistencyBreakText />`
+  6. `<ServicesSection />`
+  7. `<SampleGallery />`
+  8. `<UserFeedback />`
+- Feature Spec 09 / 13 is fully implemented and statically verified.
+- Awaits next user instruction.
+
+## Session: 2026-11-14 — Feature Spec 13: User Feedback Section (Cinematic Camera Sequence)
+
+### 1. Session Summary
+
+- Received updated specification: Feature Spec 13 — User Feedback Section (Cinematic Camera Sequence).
+- Updated `context/feature-specs/09-user-feedback.md` and marked the feature as in-progress in `context/progress-tracker.md`.
+- Re-architected `components/sections/UserFeedback.tsx` (`"use client"`) with direct named and default exports (strictly zero barrel files):
+  - Created an expansive virtual wall canvas (`300vw` by `300vh`) representing a physical studio wall holding 5 distinct tactile sticky cards.
+  - Scattered 5 cards asymmetrically across the virtual wall at varying coordinates and depths, styled with organic slight rotations (`-2°` to `+2.2°`), sharp edges (`rounded-none`), simulated top translucent tape strips, subtle borders (`border-surface-border/90`), and deep paper elevation shadows.
+  - Implemented GSAP `ScrollTrigger` viewport pinning (`start: "top top"`, `end: "+=420%"` desktop / `+=340%"` mobile, `pin: true`, `pinSpacing: true`, `anticipatePin: 1`, `scrub: 0.85` desktop / `0.6` mobile):
+    - Transforms the viewport into a motion graphic cinematic camera that continuously pans, zooms, and rack-focuses sequentially from card to card tied to vertical scroll progress.
+    - Dynamically computes invariant camera translation and scale offsets (`WallX = viewportCenterX - cardCenterX * targetScale`, `WallY = viewportCenterY - cardCenterY * targetScale`) centering each of the 5 cards dead-center in the viewport.
+    - Deliberate reading holds on each card with subtle breathing drift (`scale * 1.012`) before accelerating smoothly out of frame and easing into the next focal point.
+    - Cinematic rack-focus cross-fades card opacities (`0.42` blurred for background cards, `1.0` crisp focus for the active focal card).
+  - Cinematic camera viewfinder HUD overlay: active recording indicators (`CAM-A // REC`, `35MM ANAMORPHIC`), sequence counter (`[ 0X / 05 ]`), center reticle crosshair, framing bracket boundaries, telemetry readouts, and sequence position progress dots.
+  - Accessible static fallback for `prefers-reduced-motion: reduce` rendering all 5 cards in a clean, vertical editorial document flow without pinning or transforms.
+  - Seamlessly integrated into `app/page.tsx` following `<SampleGallery />` with zero changes to any other sections.
+- Statically verified with `pnpm exec tsc --noEmit` (0 errors), `pnpm run lint` (0 errors, 0 warnings), `pnpm run build` (`next build --webpack`, static prerendering successful), and inspected `.next/server/app/index.html` confirming SSR output.
+- Updated `context/progress-tracker.md` to mark the feature completed.
+
+### 2. Architectural & Engineering Decisions
+
+- **Camera Movement Mathematics & Scale Invariance:**
+  - Placed `transformOrigin: "0px 0px"` on the virtual wall canvas.
+  - Measured each card's unscaled center position $(cx_i, cy_i)$ on the canvas via `cardEl.offsetLeft + cardEl.offsetWidth / 2` and `cardEl.offsetTop + cardEl.offsetHeight / 2`.
+  - By setting $X_{\text{wall}} = \frac{W_v}{2} - cx_i \cdot S_i$ and $Y_{\text{wall}} = \frac{H_v}{2} - cy_i \cdot S_i$, any target card is placed dead-center in the viewport regardless of scale $S_i$ or screen size.
+- **Cinematic Pacing & Motion Graphic Curves:**
+  - Total scroll depth is budgeted across 5 focal stops (`+=420%` desktop / `+=340%` mobile).
+  - Each focal stop features a reading hold beat with subtle camera breathing drift before easing into a fluid motion graphic flight (`ease: "power2.inOut"`).
+  - Mid-flight camera zoom pull-back creates realistic drone/boom motion.
+  - Rack-focus cross-fades background cards (`opacity: 0.42, filter: blur(1px)`) to active card (`opacity: 1.0, filter: blur(0px)`).
+- **Viewfinder HUD & Immersive Aesthetic:**
+  - Viewfinder elements are fixed in the pinned viewport (`pointer-events-none z-30`): recording indicator, anamorphic lens markers, dynamic active card index counter, center reticle, and telemetry readouts.
+- **Accessibility & Reduced Motion:**
+  - When `prefers-reduced-motion: reduce` is detected via `gsap.matchMedia()`, the `300vw` canvas, pinning, and camera translations are completely bypassed, displaying all 5 cards in a natural, centered vertical layout.
+
+### 3. Implementation State
+
+- `context/feature-specs/09-user-feedback.md`: Updated with Cinematic Camera Sequence spec.
+- `components/sections/UserFeedback.tsx`: Implemented with 5-card virtual wall canvas, GSAP camera sequence, and viewfinder HUD.
+- `app/page.tsx`: Verified `<UserFeedback />` mounted after `<SampleGallery />`.
+- `context/progress-tracker.md`: Updated to completed.
+- `memory/memory.md`: Updated and verified saved.
+- Verification:
+  - `pnpm -C zivora exec tsc --noEmit` (0 errors).
+  - `pnpm -C zivora run lint` (0 errors, 0 warnings).
+  - `pnpm -C zivora run build` (`next build --webpack` compiled in 982ms, 0 errors; inspected `.next/server/app/index.html` confirming SSR output of `#feedback`, 300vw virtual wall, 5 sticky cards, viewfinder HUD, and zero barrel files in `components/`).
+
+### 4. Continuation Context & Next Steps
+
+- Homepage currently mounts:
+  1. `<HeroSection />`
+  2. `<AboutSection />`
+  3. `<CinematicText />`
+  4. `<FeaturedWork />`
+  5. `<ConsistencyBreakText />`
+  6. `<ServicesSection />`
+  7. `<SampleGallery />`
+  8. `<UserFeedback />` (Cinematic Camera Sequence)
+- Feature Spec 13 is fully implemented and statically verified.
+- Awaits next user instruction.
+
+## Session: 2026-11-14 — Feature Spec 13 Refinement: User Feedback Section (Initial Overview then Zoom One by One)
+
+### 1. Session Summary
+
+- Addressed user feedback and screenshot: "frist of all show all sticky card in screnn and them zoom one into one".
+- Updated `context/feature-specs/09-user-feedback.md` and marked the refinement as in-progress in `context/progress-tracker.md`.
+- Redesigned `components/sections/UserFeedback.tsx` (`"use client"`) with direct named and default exports (zero barrel files):
+  - **Phase 0 (Wide Overview Shot):** The camera starts at progress `0` with all 5 sticky cards visible simultaneously on the screen in an organic, non-overlapping constellation (Top-Left, Top-Right, Center, Bottom-Left, Bottom-Right). Dynamically calculates `overviewScale`, `overviewX`, and `overviewY` from the bounding box of all 5 cards so the entire composition fits comfortably with aesthetic margins on both mobile and desktop viewports, with all cards at `opacity: 1, filter: blur(0px)`.
+  - **Phases 1 to 5 (Sequential Zoom & Glides):** As the user scrolls, the camera smoothly dives into Card 1, centering it for close-up reading. It then seamlessly glides across to Card 2, swoops to Card 3, glides to Card 4, and sweeps to Card 5.
+  - **Rack-Focus Transitions:** Non-focused background cards dim to `opacity: 0.38, filter: blur(1.5px)` during close-up focal stops, while the active card is centered and crisp (`opacity: 1, filter: blur(0px)`).
+  - **Viewfinder HUD Synchronization:** Viewfinder HUD displays `[ ALL / 05 ] — OVERVIEW` during the establishing shot, transitions through `[ 01 / 05 ]` to `[ 05 / 05 ]`, and highlights an `ALL` indicator pill followed by the 5 card progress dots.
+  - **Accessibility & Reduced Motion:** Fallback under `prefers-reduced-motion: reduce` displays all 5 cards in a natural, centered vertical layout without pinning or canvas scaling.
+- Statically verified with `pnpm exec tsc --noEmit` (0 errors), `pnpm run lint` (0 errors, 0 warnings), `pnpm run build` (`next build --webpack`, static prerendering successful), and inspected `.next/server/app/index.html` confirming SSR output.
+- Updated `context/progress-tracker.md` to mark the feature completed.
+
+### 2. Architectural & Engineering Decisions
+
+- **Dynamic Overview Bounding Box Calculation:**
+  - Evaluates `minX`, `maxX`, `minY`, `maxY` across all 5 cards to find the exact cluster bounds $(clusterWidth, clusterHeight)$ and cluster center $(cx, cy)$.
+  - Derives `overviewScale = Math.min((vw * marginW) / clusterWidth, (vh * marginH) / clusterHeight)` and centers the cluster at $(vw/2, vh/2)$, ensuring all cards fit in any screen resolution (mobile to ultra-wide) on initial scroll into the section.
+- **Organic Non-Overlapping Spatial Layout:**
+  - Placed the 5 cards at (18%, 18%), (62%, 16%), (40%, 44%), (16%, 68%), and (64%, 66%) across the `240vw` by `240vh` canvas. This eliminates all card overlaps in the overview shot while providing dynamic diagonal and horizontal camera travel paths during dives and glides.
+- **Pacing & Scroll Budget:**
+  - Section pins over `+=460%` on desktop and `+=360%` on touch, giving an establishing hold on the wide overview, followed by 5 distinct reading holds and smooth motion graphic camera flights.
+
+### 3. Implementation State
+
+- `components/sections/UserFeedback.tsx`: Redesigned with initial overview establishing shot, dynamic bounding box scaling, sequential dive and rack focus.
+- `context/progress-tracker.md`: Updated to completed.
+- `memory/memory.md`: Updated and verified saved.
+- Verification:
+  - `pnpm -C zivora exec tsc --noEmit` (0 errors).
+  - `pnpm -C zivora run lint` (0 errors, 0 warnings).
+  - `pnpm -C zivora run build` (`next build --webpack` compiled in 1016ms, 0 errors; inspected `.next/server/app/index.html` confirming SSR output of `#feedback`, `[ ALL / 05 ] — OVERVIEW`, and zero barrel files in `components/`).
+
+### 4. Continuation Context & Next Steps
+
+- Homepage currently mounts:
+  1. `<HeroSection />`
+  2. `<AboutSection />`
+  3. `<CinematicText />`
+  4. `<FeaturedWork />`
+  5. `<ConsistencyBreakText />`
+  6. `<ServicesSection />`
+  7. `<SampleGallery />`
+  8. `<UserFeedback />` (Overview shot -> Zoom one by one)
+- Feature Spec 13 Refinement is fully implemented and statically verified.
+- Awaits next user instruction.
+
+
+
+
 
 
 
