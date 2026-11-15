@@ -39,13 +39,19 @@ function resolveCloudName(src?: string | null): string {
  * Minimalist hairline progress bar positioned at the top of the viewport
  * indicating initial data load progress.
  */
-function TopLoadingBar({ progress, isVisible }: { progress: number; isVisible: boolean }) {
+function TopLoadingBar({
+  progress,
+  isVisible,
+}: {
+  progress: number;
+  isVisible: boolean;
+}) {
   return (
     <div
       aria-hidden="true"
       className={cn(
         "fixed top-0 left-0 right-0 z-50 h-[2.5px] pointer-events-none bg-surface-border/20 transition-opacity duration-300",
-        isVisible ? "opacity-100" : "opacity-0"
+        isVisible ? "opacity-100" : "opacity-0",
       )}
     >
       <div
@@ -80,7 +86,7 @@ export function PackageCard({ pkg }: { pkg: PackageItem }) {
   inquiryMessage += ".";
 
   const whatsappHref = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-    inquiryMessage
+    inquiryMessage,
   )}`;
 
   return (
@@ -89,7 +95,7 @@ export function PackageCard({ pkg }: { pkg: PackageItem }) {
         "group relative flex flex-col justify-between transition-all duration-500",
         isHighlighted
           ? "bg-surface/75 border-2 border-brand/90 p-8 sm:p-10 shadow-[0_8px_32px_rgba(181,155,126,0.14)]"
-          : "bg-surface/40 border border-surface-border/50 p-8 sm:p-10 hover:border-surface-border/90"
+          : "bg-surface/40 border border-surface-border/50 p-8 sm:p-10 hover:border-surface-border/90",
       )}
     >
       <div>
@@ -101,7 +107,7 @@ export function PackageCard({ pkg }: { pkg: PackageItem }) {
                 "inline-block font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.22em] px-2.5 py-1",
                 isHighlighted
                   ? "bg-brand text-background font-semibold"
-                  : "bg-surface-subtle text-brand border border-surface-border/60"
+                  : "bg-surface-subtle text-brand border border-surface-border/60",
               )}
             >
               {pkg.badge}
@@ -178,7 +184,7 @@ export function PackageCard({ pkg }: { pkg: PackageItem }) {
             "block w-full py-4 px-6 text-center font-mono text-xs uppercase tracking-[0.2em] transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand",
             isHighlighted
               ? "bg-brand text-background hover:bg-brand/90 font-medium"
-              : "border border-surface-border hover:border-brand hover:text-brand text-copy-primary"
+              : "border border-surface-border hover:border-brand hover:text-brand text-copy-primary",
           )}
         >
           Inquire Package
@@ -212,7 +218,9 @@ export function PackagesGallery({ className }: PackagesGalleryProps) {
   const [isCategorySwitching, setIsCategorySwitching] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(25);
   const [showTopLoadingBar, setShowTopLoadingBar] = useState(true);
-  const [cldFailedCovers, setCldFailedCovers] = useState<Record<string, boolean>>({});
+  const [cldFailedCovers, setCldFailedCovers] = useState<
+    Record<string, boolean>
+  >({});
 
   const initialParamRef = useRef(categoryParam);
 
@@ -256,7 +264,8 @@ export function PackagesGallery({ className }: PackagesGalleryProps) {
           "";
 
         if (targetSlug) {
-          const initialPackages = await fetchPackagesByCategoryAction(targetSlug);
+          const initialPackages =
+            await fetchPackagesByCategoryAction(targetSlug);
           if (isCancelled) return;
           setPackages(initialPackages);
         }
@@ -319,28 +328,32 @@ export function PackagesGallery({ className }: PackagesGalleryProps) {
   const handleCategoryClick = (slug: string) => {
     if (slug === activeCategorySlug) return;
     // Maintain active category in URL parameter so the view is shareable
-    router.push(`/packages?category=${encodeURIComponent(slug)}`, { scroll: false });
+    router.push(`/packages?category=${encodeURIComponent(slug)}`, {
+      scroll: false,
+    });
   };
 
   // Identify currently active category object
   const activeCategory = categories.find((c) => c.slug === activeCategorySlug);
 
   return (
-    <section className={cn("relative w-full min-h-screen bg-background", className)}>
+    <section
+      className={cn("relative w-full min-h-screen bg-background", className)}
+    >
       {/* Top Hairline Loading Progress Bar */}
       <TopLoadingBar progress={loadingProgress} isVisible={showTopLoadingBar} />
 
       <div
         className={cn(
           "max-w-7xl mx-auto px-6 sm:px-12 lg:px-20 pt-28 sm:pt-36 lg:pt-44 pb-24 sm:pb-32 transition-opacity duration-700",
-          isReady ? "opacity-100" : "opacity-0 pointer-events-none"
+          isReady ? "opacity-100" : "opacity-0 pointer-events-none",
         )}
       >
         {/* Category Navigation Bar */}
         {categories.length > 0 && (
           <nav
             aria-label="Filter packages by service category"
-            className="flex items-center gap-6 sm:gap-8 overflow-x-auto no-scrollbar pb-3 border-b border-surface-border/30 mb-10 sm:mb-14"
+            className="flex items-center gap-6 sm:gap-8 overflow-x-auto no-scrollbar pb-3 border-b border-surface-border/30 mb-10 sm:mb-14 flex-wrap justify-between"
           >
             {categories.map((cat) => {
               const isActive = cat.slug === activeCategorySlug;
@@ -353,7 +366,7 @@ export function PackagesGallery({ className }: PackagesGalleryProps) {
                     "text-xs sm:text-sm uppercase tracking-[0.18em] whitespace-nowrap transition-colors duration-200 pb-2 -mb-[13px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand",
                     isActive
                       ? "text-copy-primary font-medium border-b-2 border-brand"
-                      : "text-copy-secondary hover:text-copy-primary"
+                      : "text-copy-secondary hover:text-copy-primary",
                   )}
                 >
                   {cat.title}
@@ -381,7 +394,9 @@ export function PackagesGallery({ className }: PackagesGalleryProps) {
                       sizes="100vw"
                       config={{
                         cloud: {
-                          cloudName: resolveCloudName(activeCategory.coverImage),
+                          cloudName: resolveCloudName(
+                            activeCategory.coverImage,
+                          ),
                         },
                       }}
                       onError={() =>
@@ -436,7 +451,9 @@ export function PackagesGallery({ className }: PackagesGalleryProps) {
         <div
           className={cn(
             "transition-opacity duration-300",
-            isCategorySwitching ? "opacity-50 pointer-events-none" : "opacity-100"
+            isCategorySwitching
+              ? "opacity-50 pointer-events-none"
+              : "opacity-100",
           )}
         >
           {packages.length > 0 ? (
@@ -454,15 +471,18 @@ export function PackagesGallery({ className }: PackagesGalleryProps) {
                 Tailored Proposals & Bespoke Coverage
               </h2>
               <p className="max-w-md mx-auto text-sm sm:text-[15px] text-copy-secondary mt-3 leading-relaxed">
-                Currently, no fixed packages are listed for this category. We craft customized quotes
-                and coverage options based on your exact vision and schedule.
+                Currently, no fixed packages are listed for this category. We
+                craft customized quotes and coverage options based on your exact
+                vision and schedule.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <a
                   href={`https://wa.me/94770512373?text=${encodeURIComponent(
                     `Hello ZIVORA, I would like to inquire about bespoke coverage${
-                      activeCategory?.title ? ` for ${activeCategory.title}` : ""
-                    }.`
+                      activeCategory?.title
+                        ? ` for ${activeCategory.title}`
+                        : ""
+                    }.`,
                   )}`}
                   target="_blank"
                   rel="noopener noreferrer"

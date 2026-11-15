@@ -58,13 +58,19 @@ function formatAlbumDate(dateStr?: string | null): string {
  * Minimalist hairline progress bar positioned at the top of the site
  * indicating data load progress.
  */
-function TopLoadingBar({ progress, isVisible }: { progress: number; isVisible: boolean }) {
+function TopLoadingBar({
+  progress,
+  isVisible,
+}: {
+  progress: number;
+  isVisible: boolean;
+}) {
   return (
     <div
       aria-hidden="true"
       className={cn(
         "fixed top-0 left-0 right-0 z-50 h-[2.5px] pointer-events-none bg-surface-border/20 transition-opacity duration-300",
-        isVisible ? "opacity-100" : "opacity-0"
+        isVisible ? "opacity-100" : "opacity-0",
       )}
     >
       <div
@@ -80,12 +86,19 @@ function TopLoadingBar({ progress, isVisible }: { progress: number; isVisible: b
  * Renders an individual album card featuring cover image, category, date, and title.
  * Cover image and title both link to `/works/${slug}` (single album page).
  */
-export function AlbumCard({ album, priority = false }: { album: AlbumItem; priority?: boolean }) {
+export function AlbumCard({
+  album,
+  priority = false,
+}: {
+  album: AlbumItem;
+  priority?: boolean;
+}) {
   const [imageError, setImageError] = useState(false);
   const [cldError, setCldError] = useState(false);
   const slug = album.slug?.current || album._id;
   const isCloudinary =
-    typeof album.coverImage === "string" && album.coverImage.includes("res.cloudinary.com");
+    typeof album.coverImage === "string" &&
+    album.coverImage.includes("res.cloudinary.com");
   const formattedDate = formatAlbumDate(album.eventDate || album.publishedAt);
   const categoryTitle = album.category?.title || "";
 
@@ -105,7 +118,7 @@ export function AlbumCard({ album, priority = false }: { album: AlbumItem; prior
               alt={album.title || "Album Cover"}
               fill
               priority={priority}
-              sizes="(max-width: 767px) 100vw, 50vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 50vw"
               config={{
                 cloud: {
                   cloudName: resolveCloudName(album.coverImage),
@@ -121,15 +134,19 @@ export function AlbumCard({ album, priority = false }: { album: AlbumItem; prior
               fill
               unoptimized
               priority={priority}
-              sizes="(max-width: 767px) 100vw, 50vw"
+              sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 50vw"
               onError={() => setImageError(true)}
               className="object-cover object-center w-full h-full transition-transform duration-700 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
             />
           )
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center bg-surface text-copy-secondary">
-            <span className="font-mono text-xs uppercase tracking-widest text-brand">ZIVORA</span>
-            <span className="font-serif text-lg text-copy-primary mt-2">{album.title}</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-3 sm:p-6 text-center bg-surface text-copy-secondary">
+            <span className="font-mono text-[10px] sm:text-xs uppercase tracking-widest text-brand">
+              ZIVORA
+            </span>
+            <span className="font-serif text-sm sm:text-lg text-copy-primary mt-1.5 sm:mt-2 line-clamp-2">
+              {album.title}
+            </span>
           </div>
         )}
 
@@ -141,10 +158,10 @@ export function AlbumCard({ album, priority = false }: { album: AlbumItem; prior
       </Link>
 
       {/* Album metadata below the image */}
-      <div className="mt-4 sm:mt-5 flex flex-col gap-1.5">
-        <div className="flex items-center justify-between text-[11px] sm:text-xs font-mono uppercase tracking-[0.18em] text-copy-secondary">
-          <span>{categoryTitle}</span>
-          {formattedDate && <span>{formattedDate}</span>}
+      <div className="mt-3 sm:mt-4 md:mt-5 flex flex-col gap-1 sm:gap-1.5">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-2 text-[10px] sm:text-xs font-mono uppercase tracking-[0.12em] sm:tracking-[0.18em] text-copy-secondary">
+          <span className="truncate">{categoryTitle}</span>
+          {formattedDate && <span className="shrink-0">{formattedDate}</span>}
         </div>
 
         <Link
@@ -152,7 +169,7 @@ export function AlbumCard({ album, priority = false }: { album: AlbumItem; prior
           data-cursor="expand"
           className="group/title inline-block focus-visible:outline-none focus-visible:underline"
         >
-          <h2 className="font-serif text-[clamp(1.5rem,1.2rem+1vw,2.25rem)] font-light leading-snug tracking-[-0.01em] text-copy-primary group-hover/title:text-brand transition-colors duration-300">
+          <h2 className="font-serif text-[clamp(1.125rem,0.9rem+0.8vw,2.25rem)] font-light leading-snug tracking-[-0.01em] text-copy-primary group-hover/title:text-brand transition-colors duration-300">
             {album.title}
           </h2>
         </Link>
@@ -180,9 +197,12 @@ export function WorksGallery({ className }: WorksGalleryProps) {
 
   // Read active category from URL parameter, defaulting to 'all'
   const categoryParam = searchParams.get("category");
-  const activeCategorySlug = categoryParam && categoryParam.trim() !== "" ? categoryParam : "all";
+  const activeCategorySlug =
+    categoryParam && categoryParam.trim() !== "" ? categoryParam : "all";
 
-  const [phase, setPhase] = useState<"loading" | "entrance" | "ready">("loading");
+  const [phase, setPhase] = useState<"loading" | "entrance" | "ready">(
+    "loading",
+  );
   const [loadingProgress, setLoadingProgress] = useState(15);
   const [showTopLoadingBar, setShowTopLoadingBar] = useState(true);
 
@@ -192,7 +212,9 @@ export function WorksGallery({ className }: WorksGalleryProps) {
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isCategorySwitching, setIsCategorySwitching] = useState(false);
-  const [cldFailedCovers, setCldFailedCovers] = useState<Record<string, boolean>>({});
+  const [cldFailedCovers, setCldFailedCovers] = useState<
+    Record<string, boolean>
+  >({});
 
   const entranceRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -263,7 +285,9 @@ export function WorksGallery({ className }: WorksGalleryProps) {
   useEffect(() => {
     if (phase !== "entrance" || !entranceRef.current) return;
 
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
 
     if (prefersReducedMotion) {
       const timer = setTimeout(() => {
@@ -292,7 +316,7 @@ export function WorksGallery({ className }: WorksGalleryProps) {
           scale: 1,
           duration: 0.8,
           ease: "power2.out",
-        }
+        },
       )
         .to({}, { duration: 1.1 }) // Reading pause
         .to(entranceRef.current, {
@@ -315,7 +339,11 @@ export function WorksGallery({ className }: WorksGalleryProps) {
     const fetchCategoryAlbums = async () => {
       setIsCategorySwitching(true);
       try {
-        const result = await fetchWorksAlbumsAction(0, PAGE_SIZE, activeCategorySlug);
+        const result = await fetchWorksAlbumsAction(
+          0,
+          PAGE_SIZE,
+          activeCategorySlug,
+        );
         if (!isCancelled) {
           setAlbums(result.albums);
           setNextStart(result.nextStart);
@@ -343,19 +371,31 @@ export function WorksGallery({ className }: WorksGalleryProps) {
     if (slug === "all") {
       router.push("/works", { scroll: false });
     } else {
-      router.push(`/works?category=${encodeURIComponent(slug)}`, { scroll: false });
+      router.push(`/works?category=${encodeURIComponent(slug)}`, {
+        scroll: false,
+      });
     }
   };
 
   // Phase 4: Infinite Scroll with non-clearing subsequent loads
   const loadNextPage = useCallback(async () => {
-    if (isFetchingRef.current || !hasMore || isLoadingMore || isCategorySwitching) return;
+    if (
+      isFetchingRef.current ||
+      !hasMore ||
+      isLoadingMore ||
+      isCategorySwitching
+    )
+      return;
 
     isFetchingRef.current = true;
     setIsLoadingMore(true);
 
     try {
-      const result = await fetchWorksAlbumsAction(nextStart, PAGE_SIZE, activeCategorySlug);
+      const result = await fetchWorksAlbumsAction(
+        nextStart,
+        PAGE_SIZE,
+        activeCategorySlug,
+      );
 
       setAlbums((prev) => {
         const existingIds = new Set(prev.map((a) => a._id));
@@ -371,10 +411,17 @@ export function WorksGallery({ className }: WorksGalleryProps) {
       setIsLoadingMore(false);
       isFetchingRef.current = false;
     }
-  }, [activeCategorySlug, hasMore, isCategorySwitching, isLoadingMore, nextStart]);
+  }, [
+    activeCategorySlug,
+    hasMore,
+    isCategorySwitching,
+    isLoadingMore,
+    nextStart,
+  ]);
 
   useEffect(() => {
-    if (phase !== "ready" || !hasMore || isLoadingMore || isCategorySwitching) return;
+    if (phase !== "ready" || !hasMore || isLoadingMore || isCategorySwitching)
+      return;
 
     const currentSentinel = sentinelRef.current;
     if (!currentSentinel) return;
@@ -390,7 +437,7 @@ export function WorksGallery({ className }: WorksGalleryProps) {
         root: null,
         rootMargin: "250px",
         threshold: 0.05,
-      }
+      },
     );
 
     observer.observe(currentSentinel);
@@ -407,7 +454,9 @@ export function WorksGallery({ className }: WorksGalleryProps) {
       : null;
 
   return (
-    <section className={cn("relative w-full min-h-screen bg-background", className)}>
+    <section
+      className={cn("relative w-full min-h-screen bg-background", className)}
+    >
       {/* Top Loading Progress Bar */}
       <TopLoadingBar progress={loadingProgress} isVisible={showTopLoadingBar} />
 
@@ -427,14 +476,14 @@ export function WorksGallery({ className }: WorksGalleryProps) {
       {/* Main Works Content Stage */}
       <div
         className={cn(
-          "max-w-7xl mx-auto px-6 sm:px-12 lg:px-20 pt-28 sm:pt-36 lg:pt-44 pb-20 sm:pb-28 transition-opacity duration-700",
-          phase === "ready" ? "opacity-100" : "opacity-0 pointer-events-none"
+          "max-w-7xl mx-auto px-4 sm:px-8 md:px-12 lg:px-20 pt-28 sm:pt-36 lg:pt-44 pb-20 sm:pb-28 transition-opacity duration-700",
+          phase === "ready" ? "opacity-100" : "opacity-0 pointer-events-none",
         )}
       >
         {/* Category Filter Navigation */}
         <nav
           aria-label="Filter works by category"
-          className="flex items-center gap-6 sm:gap-8 overflow-x-auto no-scrollbar pb-3 border-b border-surface-border/30 mb-10 sm:mb-14"
+          className="flex items-center gap-6 sm:gap-8 overflow-x-auto no-scrollbar pb-3 border-b border-surface-border/30 mb-10 sm:mb-14 flex-wrap justify-between"
         >
           <button
             type="button"
@@ -443,7 +492,7 @@ export function WorksGallery({ className }: WorksGalleryProps) {
               "text-xs sm:text-sm uppercase tracking-[0.18em] whitespace-nowrap transition-colors duration-200 pb-2 -mb-[13px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand",
               activeCategorySlug === "all"
                 ? "text-copy-primary font-medium border-b-2 border-brand"
-                : "text-copy-secondary hover:text-copy-primary"
+                : "text-copy-secondary hover:text-copy-primary",
             )}
           >
             All
@@ -457,7 +506,7 @@ export function WorksGallery({ className }: WorksGalleryProps) {
                 "text-xs sm:text-sm uppercase tracking-[0.18em] whitespace-nowrap transition-colors duration-200 pb-2 -mb-[13px] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand",
                 activeCategorySlug === cat.slug
                   ? "text-copy-primary font-medium border-b-2 border-brand"
-                  : "text-copy-secondary hover:text-copy-primary"
+                  : "text-copy-secondary hover:text-copy-primary",
               )}
             >
               {cat.title}
@@ -474,7 +523,9 @@ export function WorksGallery({ className }: WorksGalleryProps) {
                 <div className="absolute inset-0">
                   {typeof activeCategory.coverImage === "string" &&
                   activeCategory.coverImage.includes("res.cloudinary.com") &&
-                  !cldFailedCovers[activeCategory.slug || activeCategory.title] ? (
+                  !cldFailedCovers[
+                    activeCategory.slug || activeCategory.title
+                  ] ? (
                     <CldImage
                       src={activeCategory.coverImage}
                       alt={activeCategory.title}
@@ -483,7 +534,9 @@ export function WorksGallery({ className }: WorksGalleryProps) {
                       priority
                       config={{
                         cloud: {
-                          cloudName: resolveCloudName(activeCategory.coverImage),
+                          cloudName: resolveCloudName(
+                            activeCategory.coverImage,
+                          ),
                         },
                       }}
                       onError={() =>
@@ -544,12 +597,12 @@ export function WorksGallery({ className }: WorksGalleryProps) {
         {albums.length > 0 ? (
           <div
             className={cn(
-              "grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-16 lg:gap-x-12 lg:gap-y-24 transition-opacity duration-300",
-              isCategorySwitching ? "opacity-50" : "opacity-100"
+              "grid grid-cols-2 gap-x-3.5 sm:gap-x-6 md:gap-x-8 lg:gap-x-12 gap-y-8 sm:gap-y-12 md:gap-y-16 lg:gap-y-24 transition-opacity duration-300",
+              isCategorySwitching ? "opacity-50" : "opacity-100",
             )}
           >
             {albums.map((album, index) => (
-              <AlbumCard key={album._id} album={album} priority={index < 2} />
+              <AlbumCard key={album._id} album={album} priority={index < 4} />
             ))}
           </div>
         ) : (
@@ -563,7 +616,9 @@ export function WorksGallery({ className }: WorksGalleryProps) {
         )}
 
         {/* Infinite Scroll Sentinel */}
-        {hasMore && <div ref={sentinelRef} className="h-10 w-full pointer-events-none" />}
+        {hasMore && (
+          <div ref={sentinelRef} className="h-10 w-full pointer-events-none" />
+        )}
 
         {/* Bottom Loading Indicator (while loading next albums without clearing the page) */}
         {isLoadingMore && (
