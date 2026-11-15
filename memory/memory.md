@@ -1777,6 +1777,91 @@
 - Dedicated Contact page `/contact` now features the massive fluid headline, direct contact phone number, horizontally centered minimal form, and linked social media icons.
 - Awaiting user direction for the next task or feature specification.
 
+## Session: 2026-11-15 — Backend Task 06: Contact Schema & Form Submission to Sanity (06-contact.md)
+
+### 1. Session Summary
+
+- Read `zivora/context/backend/06-contact.md` and marked Backend Task 06 as in-progress in `zivora/context/progress-tracker.md`.
+- Implemented Sanity content schema for contact submissions in `studio/schemaTypes/contact.ts` with fields `name`, `email`, `scope`, and `submittedAt`. Registered it in `studio/schemaTypes/index.ts`.
+- Re-extracted studio schema (`schema.json`) and regenerated type-safe TypeScript definitions (`Contact`) in `zivora/sanity.types.ts` via `sanity typegen generate`.
+- Configured authenticated mutation client `writeClient` in `zivora/lib/sanity/client.ts` using `process.env.SANITY_API_WRITE_TOKEN || process.env.SANITY_API_TOKEN` with `useCdn: false`.
+- Documented `SANITY_API_WRITE_TOKEN` in `zivora/.env.example`.
+- Created Server Action `submitContactAction` in `zivora/app/contact/actions.ts` to validate contact input, check token configuration, and create the document in Sanity Content Lake via `writeClient.create()`.
+- Updated `components/sections/ContactSection.tsx` (`"use client"`):
+  - Connected form submission to `submitContactAction` (customizable via optional `onSubmitAction` prop).
+  - Added real-time UI feedback for sending state: displays `SENDING DATA TO STUDIO...` with pulsing indicator alongside the disabled submit button (`TRANSMITTING...`).
+  - Added UI feedback for submitted state: displays `FORM SUBMITTED` with brand accent dot, confirmation reassurance, and a `Send Another Message` action to reset the form.
+  - Added accessible error display with `role="alert"` for validation errors or server token omissions.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and Sanity Studio build (`sanity build`).
+- Updated `zivora/context/progress-tracker.md` to completed.
+
+### 2. Architectural & Engineering Decisions
+
+- **Separation of Read vs. Write Clients**: In Next.js with Sanity, reads use CDN (`useCdn: true`) and public project credentials, whereas mutations must never use CDN (`useCdn: false`) and require an authenticated write token (`SANITY_API_WRITE_TOKEN`). Kept `writeClient` strictly on the server in Server Actions (`app/contact/actions.ts`) to avoid leaking tokens to the client bundle.
+- **Defensive Server Action Validation & Token Checking**: `submitContactAction` validates input names, emails, and scope lengths before calling Sanity. If `SANITY_API_WRITE_TOKEN` is missing, it returns a descriptive error guiding the developer to add the token to `.env`, rather than failing silently or crashing.
+- **Accessible, Non-Intrusive UI Feedback**: Added live sending status with `aria-live="polite"` and pulsing visual cue without disrupting the layout geometry. When submitted, the form transitions to a minimalist confirmation card announcing "FORM SUBMITTED" without artificial filler text.
+
+### 3. Implementation State
+
+- `studio/schemaTypes/contact.ts`: Created
+- `studio/schemaTypes/index.ts`: Registered `contact` schema
+- `studio/schema.json`: Extracted with new `contact` document type
+- `zivora/sanity.types.ts`: Regenerated with `Contact` type definition
+- `zivora/lib/sanity/client.ts`: Exported `writeClient` with write token configuration
+- `zivora/.env.example`: Documented `SANITY_API_WRITE_TOKEN`
+- `zivora/app/contact/actions.ts`: Created Server Action `submitContactAction`
+- `zivora/components/sections/ContactSection.tsx`: Integrated Server Action, sending feedback, and submitted confirmation
+- `zivora/context/progress-tracker.md`: Updated to completed
+- Verification:
+  - `pnpm -C zivora exec tsc --noEmit` (0 errors)
+  - `pnpm -C zivora run lint` (0 errors, 0 warnings)
+  - `pnpm -C zivora run build` (`next build --webpack` passed, 0 errors, static routes prerendered)
+  - `pnpm -C studio run build` (`sanity build` passed, 0 errors)
+
+### 4. Continuation Context & Next Steps
+
+- Contact form submissions are now hooked up to Sanity Studio.
+- Note for deployment/live submission: Ensure `SANITY_API_WRITE_TOKEN` is set in the runtime environment (`.env`) with editor/write permissions in the Sanity project.
+- Awaiting user direction for the next task or feature specification.
+
+## Session: 2026-11-15 — Contact Form Refinement: Server-Only Dev Errors & Creative Human Post-Submission Messaging
+
+### 1. Session Summary
+
+- Addressed user feedback to suppress developer error messages from the webpage and show creative, human post-submission messages:
+  - Technical developer guidance (such as missing `SANITY_API_WRITE_TOKEN`, API errors, and stack traces) is logged exclusively to the server terminal (`console.warn` / `console.error`) and never surfaced to visitors.
+  - Replaced technical/robotic error messages with warm, human responses: "We couldn't deliver your note right now. Please reach us directly on WhatsApp or email, or try again shortly."
+  - Replaced robotic sending telemetry (`SENDING DATA TO STUDIO...` and `TRANSMITTING...`) with human editorial copy: `Delivering your note...` with a subtle pulsing brand indicator, and `SENDING...` on the button.
+  - Replaced sterile confirmation (`FORM SUBMITTED` / `INQUIRY RECEIVED`) with a warm, artistic editorial acknowledgment:
+    - Badge: `NOTE RECEIVED`
+    - Headline: `Thank you for reaching out.`
+    - Body: "Every memorable project starts with a conversation. We will personally read through your note and get back to you shortly with thoughts and next steps."
+    - Direct conversational touch: "Prefer a quick chat? WhatsApp us" linking directly to the studio's WhatsApp.
+    - Reset action: `Write another note ->`.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and Sanity Studio build (`sanity build`).
+- Updated `zivora/context/progress-tracker.md` to reflect the refined messaging.
+
+### 2. Architectural & Engineering Decisions
+
+- **Strict Error Masking on the Client Boundary**: Server Actions must never leak internal configuration states (such as missing environment variables or Sanity mutation error payloads) to client components. Developer-actionable notices are isolated to server logs, and user-facing responses maintain an empathetic, human tone that offers alternate contact channels (WhatsApp/email).
+- **Creative Editorial Voice**: In alignment with ZIVORA's cinematic brand identity, all transactional microcopy avoids bureaucratic terminology ("inquiry", "dispatch", "telemetry", "business hours", "submitting data") in favor of personal, artisanal phrasing ("note", "conversation", "collaboration").
+
+### 3. Implementation State
+
+- `zivora/app/contact/actions.ts`: Updated to keep technical warnings on the server terminal and return polite, human error text.
+- `zivora/components/sections/ContactSection.tsx`: Updated with human sending state (`Delivering your note...`), refined error fallbacks, and the creative post-submission card.
+- `zivora/context/progress-tracker.md`: Updated.
+- Verification:
+  - `pnpm -C zivora exec tsc --noEmit` (0 errors)
+  - `pnpm -C zivora run lint` (0 errors, 0 warnings)
+  - `pnpm -C zivora run build` (`next build --webpack` passed, 0 errors)
+  - `pnpm -C studio run build` (`sanity build` passed, 0 errors)
+
+### 4. Continuation Context & Next Steps
+
+- Contact form now features warm human microcopy and hides all internal developer errors from the UI.
+- Awaiting user direction for the next task or feature specification.
+
 
 
 

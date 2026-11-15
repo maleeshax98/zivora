@@ -28,6 +28,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { MessageCircle, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { gsap, prefersReducedMotion } from "@/lib/gsap";
+import { submitContactAction, type ContactSubmissionResult } from "@/app/contact/actions";
 
 export interface SocialLinkItem {
   label: string;
@@ -120,6 +121,11 @@ export interface ContactSectionProps {
   directContactNumber?: string;
   whatsAppHref?: string;
   socialLinks?: SocialLinkItem[];
+  onSubmitAction?: (data: {
+    name: string;
+    email: string;
+    scope?: string;
+  }) => Promise<ContactSubmissionResult>;
   className?: string;
 }
 
@@ -130,6 +136,7 @@ export function ContactSection({
   directContactNumber = "+94 77 051 2373",
   whatsAppHref = "https://wa.me/94770512373",
   socialLinks = DEFAULT_SOCIAL_LINKS,
+  onSubmitAction = submitContactAction,
   className,
 }: ContactSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
@@ -148,19 +155,38 @@ export function ContactSection({
   const [formStatus, setFormStatus] = useState<"idle" | "submitting" | "submitted">("idle");
   const [formError, setFormError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim() || !formData.email.trim()) {
-      setFormError("Please provide your name and email address.");
+      setFormError("Please share your name and email so we know how to reach you.");
       return;
     }
     setFormError(null);
     setFormStatus("submitting");
 
-    // Simulate editorial dispatch
-    setTimeout(() => {
-      setFormStatus("submitted");
-    }, 600);
+    try {
+      const result = await onSubmitAction({
+        name: formData.name,
+        email: formData.email,
+        scope: formData.scope,
+      });
+
+      if (result.success) {
+        setFormStatus("submitted");
+      } else {
+        setFormStatus("idle");
+        setFormError(
+          result.error ||
+            "We could not deliver your note right now. Please reach us directly on WhatsApp or email, or try again in a moment."
+        );
+      }
+    } catch (err) {
+      console.error("[Contact Form Dispatch Error]", err);
+      setFormStatus("idle");
+      setFormError(
+        "We could not deliver your note right now. Please reach us directly on WhatsApp or email, or try again in a moment."
+      );
+    }
   };
 
   const handleReset = () => {
@@ -352,23 +378,41 @@ export function ContactSection({
             <div
               role="status"
               aria-live="polite"
-              className="p-6 sm:p-7 rounded-none border border-surface-border bg-surface text-left space-y-3.5"
+              className="p-7 sm:p-9 rounded-none border border-surface-border/80 bg-surface/80 text-left space-y-4"
             >
-              <p className="font-mono text-xs sm:text-sm uppercase tracking-[0.2em] text-brand">
-                INQUIRY RECEIVED
+              
+
+              <h3 className="font-serif text-xl sm:text-2xl text-copy-primary font-normal leading-snug">
+                Thank you for reaching out.
+              </h3>
+
+              <p className="text-sm sm:text-base dark:text-copy-secondary font-serif leading-relaxed ">
+                Every memorable project starts with a conversation. We will personally read through
+                your note and get back to you shortly with thoughts and next steps.
               </p>
-              <p className="text-sm sm:text-base text-copy-primary font-serif leading-relaxed">
-                Thank you. Your inquiry has been received. Our studio will connect within 24 business
-                hours.
-              </p>
-              <button
-                type="button"
-                onClick={handleReset}
-                data-cursor="expand"
-                className="font-mono text-[11px] sm:text-xs uppercase tracking-[0.2em] text-copy-secondary hover:text-copy-primary underline underline-offset-4 transition-colors"
-              >
-                Send Another Message
-              </button>
+
+              <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-surface-border/40">
+                <p className="font-mono text-[11px] sm:text-xs uppercase tracking-[0.16em] text-copy-secondary/80">
+                  Prefer a quick chat?{" "}
+                  <a
+                    href={whatsAppHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand underline underline-offset-4 hover:text-copy-primary transition-colors"
+                  >
+                    WhatsApp us
+                  </a>
+                </p>
+
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  data-cursor="expand"
+                  className="font-mono text-[11px] sm:text-xs uppercase tracking-[0.2em] text-copy-secondary hover:text-copy-primary underline underline-offset-4 transition-colors text-left sm:text-right"
+                >
+                  Write another note &rarr;
+                </button>
+              </div>
             </div>
           ) : (
             <form
@@ -425,28 +469,43 @@ export function ContactSection({
               </div>
 
               {formError && (
-                <p className="font-mono text-[11px] sm:text-xs text-destructive tracking-[0.1em]">
+                <p role="alert" className="font-mono text-[11px] sm:text-xs text-destructive tracking-[0.1em]">
                   {formError}
                 </p>
               )}
 
-              {/* Submit Button: Plain text-based SEND INQUIRY -> aligned bottom-right */}
-              <div className="flex justify-end pt-3 sm:pt-4">
-                <button
-                  type="submit"
-                  disabled={formStatus === "submitting"}
-                  data-cursor="expand"
-                  className="inline-flex items-center gap-2 bg-transparent border-0 p-0 font-mono text-xs sm:text-sm uppercase tracking-[0.22em] text-copy-primary hover:text-brand transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  {formStatus === "submitting" ? (
-                    <span>TRANSMITTING...</span>
-                  ) : (
-                    <>
-                      <span>SEND INQUIRY</span>
-                      <span aria-hidden="true">&rarr;</span>
-                    </>
-                  )}
-                </button>
+              {/* Submit Controls: Human Sending Feedback + SEND INQUIRY -> */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-3 sm:pt-4">
+                {formStatus === "submitting" ? (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="flex items-center gap-2 font-mono text-[11px] sm:text-xs uppercase tracking-[0.18em] text-copy-secondary"
+                  >
+                    <span className="w-1.5 h-1.5 rounded-full bg-brand animate-ping" aria-hidden="true" />
+                    <span>Delivering your note...</span>
+                  </div>
+                ) : (
+                  <span className="hidden sm:inline-block" aria-hidden="true" />
+                )}
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={formStatus === "submitting"}
+                    data-cursor="expand"
+                    className="inline-flex items-center gap-2 bg-transparent border-0 p-0 font-mono text-xs sm:text-sm uppercase tracking-[0.22em] text-copy-primary hover:text-brand transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {formStatus === "submitting" ? (
+                      <span>SENDING...</span>
+                    ) : (
+                      <>
+                        <span>SEND INQUIRY</span>
+                        <span aria-hidden="true">&rarr;</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             </form>
           )}

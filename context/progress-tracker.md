@@ -8,9 +8,23 @@ Phase 2: CMS Integration & Content Modeling
 
 ## Current Goal
 
-Feature Spec 16: Dedicated Contact Page (`context/feature-specs/contact/01-initial.md`) completed with centered minimal form and linked social media icons. Awaiting user review and next feature specification.
+Backend Task 06: Contact Schema & Form Submission to Sanity (`context/backend/06-contact.md`) completed. Awaiting user review and next feature specification.
 
 ## Completed
+
+- Backend Task 06: Contact Schema & Form Submission to Sanity (`context/backend/06-contact.md`):
+  - Created `contact` document schema in `studio/schemaTypes/contact.ts` with fields: `name` (required string), `email` (required email string), `scope` (text for brief scope/timeline), and `submittedAt` (datetime initialized to ISO string) with preview selector (name, email, formatted date)
+  - Registered `contact` schema in `studio/schemaTypes/index.ts`
+  - Re-extracted schema to `studio/schema.json` and generated type-safe TypeScript definition for `Contact` in `zivora/sanity.types.ts` via `sanity typegen generate`
+  - Configured authenticated `writeClient` in `zivora/lib/sanity/client.ts` using `process.env.SANITY_API_WRITE_TOKEN || process.env.SANITY_API_TOKEN` and `useCdn: false`
+  - Documented `SANITY_API_WRITE_TOKEN` in `zivora/.env.example`
+  - Created Server Action `submitContactAction(input)` in `zivora/app/contact/actions.ts`: validates name, email, and scope, logs full technical/developer configuration diagnostics strictly to the server terminal (`console.warn`/`console.error`), and returns polite, human-centered error and success responses to the frontend
+  - Updated `zivora/components/sections/ContactSection.tsx`:
+    - Replaced simulated timeout dispatch with `submitContactAction` (customizable via optional `onSubmitAction` prop)
+    - Suppressed all technical developer errors from the UI; displays only warm, human guidance if delivery fails
+    - Replaced robotic sending indicators with human copy: `Delivering your note...` with pulsing brand indicator, and `SENDING...` button state
+    - Replaced robotic confirmation (`FORM SUBMITTED` / `INQUIRY RECEIVED`) with an editorial, creative message: `NOTE RECEIVED`, warm acknowledgment ("Every memorable project starts with a conversation..."), direct WhatsApp conversational link, and `Write another note ->` reset action
+  - Verified static compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and Sanity Studio build (`sanity build`)
 
 - Feature Spec 16: Dedicated Contact Page (`context/feature-specs/contact/01-initial.md`):
   - Created dedicated route `app/contact/page.tsx` mounting `<ContactSection />` and `<FooterSection />` with SEO metadata

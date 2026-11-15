@@ -15,6 +15,18 @@
 export declare const internalGroqTypeReferenceTo: unique symbol;
 
 // Source: schema.json
+export type Contact = {
+  _id: string;
+  _type: "contact";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  name?: string;
+  email?: string;
+  scope?: string;
+  submittedAt?: string;
+};
+
 export type CategoryReference = {
   _ref: string;
   _type: "reference";
@@ -231,6 +243,7 @@ export type Geopoint = {
 };
 
 export type AllSanitySchemaTypes =
+  | Contact
   | CategoryReference
   | Package
   | Slug
