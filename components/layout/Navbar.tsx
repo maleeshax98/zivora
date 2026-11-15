@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 const NAV_LINKS: NavItem[] = [
   { label: "Home", href: "/" },
   { label: "Works", href: "/works" },
+  { label: "Services", href: "/services" },
   { label: "Packages", href: "/packages" },
   { label: "Contact", href: "/contact" },
 ];

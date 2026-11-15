@@ -3,8 +3,6 @@
 import React, {
   useEffect,
   useRef,
-  useState,
-  useCallback,
   useMemo,
 } from "react";
 import { cn } from "@/lib/utils";
@@ -16,7 +14,7 @@ export interface HeroImageItem {
   src: string;
   alt: string;
   title: string;
-  category: string;
+  category?: string;
   aspectRatio?: string;
 }
 
@@ -28,76 +26,6 @@ export interface HeroSectionProps {
   scrollTarget?: string;
   className?: string;
 }
-
-const DEFAULT_CLOUDINARY_IMAGE_URL =
-  "https://res.cloudinary.com/pso8u1zy/image/upload/v1794419553/ij0uyatmtd17wz1jdosz.jpg";
-
-export const DEFAULT_HERO_IMAGES: HeroImageItem[] = [
-  {
-    id: "hero-arch-01",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Warm architectural light casting quiet shadows across limestone surfaces",
-    title: "Monolith I",
-    category: "Architectural Still",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-02",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Minimalist editorial framing with natural textures and subtle shadows",
-    title: "Solstice Forms",
-    category: "Editorial Film",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-03",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Cinematic stillness and geometric stone contours at dusk",
-    title: "Nocturne",
-    category: "Shadow Study",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-04",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Fleeting atmospheric dusk tones and sculptural forms",
-    title: "Vesper Series",
-    category: "35mm Archive",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-05",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Textured linen and natural daylight interplay",
-    title: "Materiality",
-    category: "Brand Narrative",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-06",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Brutalist spatial angles capturing raw daylight",
-    title: "Brutalist Dawn",
-    category: "Spatial Archive",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-07",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Curated composition of reflective glass and stone",
-    title: "Aperture VIII",
-    category: "Film Still",
-    aspectRatio: "3 / 4",
-  },
-  {
-    id: "hero-arch-08",
-    src: DEFAULT_CLOUDINARY_IMAGE_URL,
-    alt: "Harmonic shadow interplay in modern interior",
-    title: "Zenith Lines",
-    category: "Form Study",
-    aspectRatio: "3 / 4",
-  },
-];
 
 /**
  * Extracts Cloudinary cloud name safely from a Cloudinary URL or falls back to env/default.
@@ -130,7 +58,7 @@ function resolveCloudName(url: string): string {
 export function HeroSection({
   title = "ZIVORA",
   description = "Capturing architectural stillness and fleeting light through intentional frames. An editorial archive of contemporary spaces, material forms, and cinematic narratives.",
-  items = DEFAULT_HERO_IMAGES,
+  items = [],
   className,
 }: HeroSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
@@ -145,75 +73,14 @@ export function HeroSection({
   // Split title into individual letter characters
   const letters = useMemo(() => title.split(""), [title]);
 
-  // Responsive card dimension states
-  const [metrics, setMetrics] = useState<{
-    cardWidth: number;
-    gap: number;
-    visibleCount: number;
-  }>({
-    cardWidth: 220,
-    gap: 20,
-    visibleCount: 4, // SSR default
-  });
+  // Active items from props (capped at 6 items matching Sanity query limit)
+  const activeItems = useMemo(() => {
+    return items ?? [];
+  }, [items]);
 
-  // Calculate dynamic image count and dimensions based on viewport & container width
-  const updateLayoutMetrics = useCallback(() => {
-    if (typeof window === "undefined") return;
-
-    const windowWidth = window.innerWidth;
-    const isMobile = windowWidth < 768;
-    const isTablet = windowWidth >= 768 && windowWidth < 1024;
-
-    const cardWidth = isMobile ? 140 : isTablet ? 190 : 230;
-    const gap = isMobile ? 12 : isTablet ? 16 : 20;
-
-    // Measure available container width or compute from window margins
-    const container = imageRowRef.current || imageLineContainerRef.current;
-    const availableWidth = container
-      ? container.clientWidth
-      : isMobile
-        ? windowWidth - 32
-        : isTablet
-          ? windowWidth - 64
-          : windowWidth - 128;
-
-    // Dynamically calculate exact number of full images that fit the available width
-    const exactFit = Math.max(
-      1,
-      Math.min(
-        items.length,
-        Math.floor((availableWidth + gap) / (cardWidth + gap)),
-      ),
-    );
-
-    setMetrics({
-      cardWidth,
-      gap,
-      visibleCount: exactFit,
-    });
-  }, [items.length]);
-
-  // Handle ResizeObserver and window resize
-  useEffect(() => {
-    updateLayoutMetrics();
-
-    let resizeObserver: ResizeObserver | null = null;
-    const rowEl = imageRowRef.current || imageLineContainerRef.current;
-
-    if (typeof ResizeObserver !== "undefined" && rowEl) {
-      resizeObserver = new ResizeObserver(() => {
-        updateLayoutMetrics();
-      });
-      resizeObserver.observe(rowEl);
-    }
-
-    window.addEventListener("resize", updateLayoutMetrics, { passive: true });
-
-    return () => {
-      resizeObserver?.disconnect();
-      window.removeEventListener("resize", updateLayoutMetrics);
-    };
-  }, [updateLayoutMetrics]);
+  const displayedItems = useMemo(() => {
+    return activeItems.slice(0, 6);
+  }, [activeItems]);
 
   // Orchestrate Master GSAP Sequential Timeline
   useEffect(() => {
@@ -327,18 +194,7 @@ export function HeroSection({
     }, section);
 
     return () => ctx.revert();
-  }, [letters.length, metrics.visibleCount]);
-
-  // Display items:
-  // On desktop/tablet, slice to the exact calculated count fitting the viewport.
-  // On mobile (< 768px), allow up to 4 items in a touch-friendly horizontal scroll track
-  // to prevent overflow while giving mobile users fluid swipe access.
-  const isMobileViewport =
-    typeof window !== "undefined" ? window.innerWidth < 768 : false;
-  const displayedItems = items.slice(
-    0,
-    isMobileViewport ? Math.min(items.length, 4) : metrics.visibleCount,
-  );
+  }, [letters.length, displayedItems]);
 
   return (
     <section
@@ -348,7 +204,7 @@ export function HeroSection({
         "relative flex min-h-[100dvh] w-full flex-col justify-center md:justify-between overflow-hidden bg-background text-foreground select-none",
         "pt-24 sm:pt-28 md:pt-32 lg:pt-36",
         "pb-10 sm:pb-12 md:pb-14",
-        "px-6 sm:px-10 lg:px-16 xl:px-20",
+        "px-4 sm:px-8 md:px-10 lg:px-16 xl:px-20",
         className,
       )}
     >
@@ -416,14 +272,10 @@ export function HeroSection({
         <div
           ref={imageRowRef}
           className={cn(
-            "flex w-full items-center",
-            // Mobile: centered or horizontally scrollable if overflowing
-            "justify-center",
-            "overflow-x-auto no-scrollbar touch-pan-x py-2 -mx-2 px-2",
+            "flex w-full max-w-full items-center justify-center",
+            "gap-1.5 sm:gap-2.5 md:gap-3.5 lg:gap-4 xl:gap-5",
+            "overflow-hidden py-2",
           )}
-          style={{
-            gap: `${metrics.gap}px`,
-          }}
         >
           {displayedItems.map((item, idx) => (
             <div
@@ -432,9 +284,8 @@ export function HeroSection({
                 imageItemRefs.current[idx] = el;
               }}
               data-cursor="expand"
-              className="group relative shrink-0 overflow-hidden rounded-none border border-surface-border/70 bg-surface-subtle shadow-sm transition-all duration-300 hover:border-brand/70"
+              className="group relative flex-1 min-w-0 max-w-[240px] overflow-hidden rounded-none border border-surface-border/70 bg-surface-subtle shadow-sm transition-all duration-300 hover:border-brand/70"
               style={{
-                width: `${metrics.cardWidth}px`,
                 aspectRatio: item.aspectRatio || "3 / 4",
               }}
             >
@@ -444,24 +295,28 @@ export function HeroSection({
                 aspectRatio={item.aspectRatio || "3 / 4"}
                 width={460}
                 height={613}
-                sizes="(max-width: 640px) 140px, (max-width: 1024px) 190px, 230px"
+                sizes="(max-width: 640px) 16vw, (max-width: 1024px) 16vw, 240px"
                 config={{
                   cloud: {
                     cloudName: resolveCloudName(item.src),
                   },
                 }}
-                wrapperClassName="rounded-none"
+                wrapperClassName="rounded-none w-full h-full"
                 className="h-full w-full object-cover rounded-none transition-transform duration-700 ease-out group-hover:scale-105"
               />
 
               {/* Subtle Editorial Gradient & Caption on Hover */}
-              <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-background/95 via-background/30 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 rounded-none">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-copy-primary font-medium">
-                  {item.title}
-                </span>
-                <span className="font-mono text-[9px] uppercase tracking-wider text-copy-secondary">
-                  {item.category}
-                </span>
+              <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-background/95 via-background/30 to-transparent p-1.5 sm:p-2.5 md:p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 rounded-none">
+                {item.title && (
+                  <span className="font-mono text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-wider text-copy-primary font-medium truncate">
+                    {item.title}
+                  </span>
+                )}
+                {item.category && (
+                  <span className="hidden sm:inline-block font-mono text-[8px] md:text-[9px] uppercase tracking-wider text-copy-secondary truncate">
+                    {item.category}
+                  </span>
+                )}
               </div>
             </div>
           ))}

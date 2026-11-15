@@ -1,11 +1,7 @@
 "use client";
 
-import React, { useEffect, useRef, useSyncExternalStore } from "react";
+import React, { useEffect, useRef } from "react";
 import { gsap, prefersReducedMotion } from "@/lib/gsap";
-
-const subscribe = () => () => {};
-const getClientSnapshot = () => true;
-const getServerSnapshot = () => false;
 
 /**
  * CustomMouseCursor
@@ -15,20 +11,14 @@ const getServerSnapshot = () => false;
  * - Fluid expansion and accent highlighting when hovering interactive elements
  * - Automatically disabled on touch-enabled devices and when reduced motion is preferred
  * - Global CSS class integration that cleanly hides native cursor on desktop
+ * - Server-safe static markup rendering to eliminate hydration DOM shifting
  */
 export function CustomCursor() {
-  const isMounted = useSyncExternalStore(
-    subscribe,
-    getClientSnapshot,
-    getServerSnapshot
-  );
-
   const containerRef = useRef<HTMLDivElement>(null);
   const dotRef = useRef<HTMLDivElement>(null);
   const ringRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isMounted) return;
 
     // Detect touch-based or non-mouse devices
     const isTouch =
@@ -175,9 +165,7 @@ export function CustomCursor() {
       document.removeEventListener("pointerover", handlePointerOver);
       document.removeEventListener("pointerout", handlePointerOut);
     };
-  }, [isMounted]);
-
-  if (!isMounted) return null;
+  }, []);
 
   return (
     <div
@@ -188,12 +176,12 @@ export function CustomCursor() {
       {/* Outer Springy Ring */}
       <div
         ref={ringRef}
-        className="pointer-events-none fixed top-0 left-0 h-9 w-9 rounded-full border border-copy-primary/60 transition-[border-color,background-color] duration-150 will-change-transform"
+        className="pointer-events-none fixed top-0 left-0 h-9 w-9 rounded-full border border-copy-primary/60 opacity-0 transition-[border-color,background-color] duration-150 will-change-transform"
       />
       {/* Center Precise Dot */}
       <div
         ref={dotRef}
-        className="pointer-events-none fixed top-0 left-0 h-2 w-2 rounded-full bg-accent will-change-transform"
+        className="pointer-events-none fixed top-0 left-0 h-2 w-2 rounded-full bg-accent opacity-0 will-change-transform"
       />
     </div>
   );
