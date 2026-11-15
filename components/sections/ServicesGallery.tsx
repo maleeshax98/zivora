@@ -1,4 +1,3 @@
-// Reference file named "ZIVORA" verbatim to align with the broader project architecture.
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -88,25 +87,18 @@ function TopLoadingBar({
   );
 }
 
-/**
- * Dedicated Services Page Component for ZIVORA — Feature Spec 17.
- *
- * Implements an editorial dedicated Services layout utilizing whitespace design principles:
- * - Full-viewport header (min-h-[100dvh]) with massive fluid typography centered in the viewport.
- * - Sequentially stacked asymmetrical service blocks with cinematic CldImage preview media.
- * - Precise editorial descriptions and direct navigation buttons to packages and works.
- * - Smooth GSAP entrance & ScrollTrigger reveal animations respecting Lenis and reduced motion.
- *
- * Reference: file named "ZIVORA" verbatim.
- */
 export function ServicesGallery({
   initialCategories = [],
   className,
 }: ServicesGalleryProps) {
   const [categories, setCategories] =
     useState<ServiceCategoryItem[]>(initialCategories);
-  const [cldFailedImages, setCldFailedImages] = useState<Record<string, boolean>>({});
-  const [finalFailedImages, setFinalFailedImages] = useState<Record<string, boolean>>({});
+  const [cldFailedImages, setCldFailedImages] = useState<
+    Record<string, boolean>
+  >({});
+  const [finalFailedImages, setFinalFailedImages] = useState<
+    Record<string, boolean>
+  >({});
   const [isLoading, setIsLoading] = useState(initialCategories.length === 0);
   const [loadingProgress, setLoadingProgress] = useState(
     initialCategories.length > 0 ? 100 : 30,
@@ -286,16 +278,6 @@ export function ServicesGallery({
         aria-label="Services Header"
         className="relative min-h-[100dvh] w-full flex flex-col justify-between items-center px-6 sm:px-12 py-20 text-center select-none overflow-hidden"
       >
-        {/* Top Eyebrow */}
-        <div className="pt-12 sm:pt-16">
-          <p
-            ref={headerEyebrowRef}
-            className="font-mono text-xs sm:text-sm uppercase tracking-[0.3em] text-copy-secondary/80"
-          >
-            DISCIPLINES & COMMISSIONS
-          </p>
-        </div>
-
         {/* Massive Fluid Typography Centerpiece */}
         <div className="flex-1 flex items-center justify-center my-auto">
           <h1
@@ -312,7 +294,7 @@ export function ServicesGallery({
           className="pb-4 flex flex-col items-center gap-3 text-copy-secondary/70"
         >
           <span className="font-mono text-[10px] sm:text-xs uppercase tracking-[0.25em]">
-            EXPLORE DISCIPLINES
+            EXPLORE
           </span>
           <div className="w-[1px] h-8 bg-surface-border animate-pulse" />
         </div>
@@ -420,7 +402,8 @@ export function ServicesGallery({
                           {serviceTitle}
                         </span>
                       </div>
-                    ) : hasCldError || !service.coverImage.includes("res.cloudinary.com") ? (
+                    ) : hasCldError ||
+                      !service.coverImage.includes("res.cloudinary.com") ? (
                       <Image
                         src={service.coverImage}
                         alt={`${serviceTitle} - ZIVORA Editorial Service`}

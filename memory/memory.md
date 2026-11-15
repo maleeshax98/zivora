@@ -2042,3 +2042,39 @@
 
 - The 25 Megapixel Cloudinary limit error is resolved. All service, package, and works images render with resilient fallbacks.
 - Awaiting user review and next instructions.
+
+
+## Session: 2026-11-16 — Feature: Two-Column Album Grid on Small Screens in Works Page
+
+### 1. Session Summary
+
+- Read `context/feature-specs/responsiveness/works-grid.md` and updated `context/progress-tracker.md` to in-progress.
+- Implemented the two-column grid system for albums on small screens in the Works page (`components/sections/WorksGallery.tsx`).
+- Changed albums grid layout from `grid-cols-1 md:grid-cols-2` to `grid-cols-2` across all breakpoints with proportional spacing (`gap-x-3.5 sm:gap-x-6 md:gap-x-8 lg:gap-x-12` and `gap-y-8 sm:gap-y-12 md:gap-y-16 lg:gap-y-24`).
+- Adjusted container padding on small viewports from `px-6` to `px-4 sm:px-8 md:px-12 lg:px-20` to maximize visual breathing room for two-column mobile cards.
+- Refactored `AlbumCard`:
+  - Updated responsive image `sizes` attribute from `(max-width: 767px) 100vw, 50vw` to `(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 50vw` for both `CldImage` and unoptimized `Image` fallback.
+  - Scaled album title typography using responsive fluid clamp (`text-[clamp(1.125rem,0.9rem+0.8vw,2.25rem)]`) and reduced margin-top (`mt-3 sm:mt-4 md:mt-5`), preventing awkward multi-line breaks and maintaining visual harmony in compact 2-column mobile cards.
+  - Refined metadata row (`categoryTitle` and `formattedDate`) to flex responsively (`flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-2 text-[10px] sm:text-xs`) with text truncation to prevent overflow.
+  - Increased priority preloading from 2 to 4 cards (`priority={index < 4}`) to cover both cards in the initial 2 visible rows.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`next build --webpack`), generating static route `○ /works`.
+- Updated `context/progress-tracker.md` to completed.
+
+### 2. Architectural & Engineering Decisions
+
+- **Two-Column Grid Across All Breakpoints**: Rather than collapsing to a single full-width column on mobile screens, `grid-cols-2` maintains an editorial, catalog-style visual rhythm consistent with other sections (e.g. single album masonry photo grid, sample gallery mobile 2-col).
+- **Proportional Spacing & Micro-Typography**: Two columns on a 375px–430px mobile viewport leave ~150–185px per card. A single-column title size (`clamp(1.5rem, ...)`) would cause each title to take 4–6 lines; scaling to `clamp(1.125rem, 0.9rem + 0.8vw, 2.25rem)` (18px base) and adjusting metadata layout (`flex-col sm:flex-row`) keeps the cards balanced, legible, and free of layout breaks.
+
+### 3. Implementation State
+
+- `zivora/components/sections/WorksGallery.tsx`: Updated with 2-column grid on small screens, responsive image sizes, and refined card typography/metadata.
+- `zivora/context/progress-tracker.md`: Updated to completed.
+- Verification:
+  - `pnpm tsc --noEmit` passed with 0 errors.
+  - `pnpm run lint` passed with 0 errors and 0 warnings.
+  - `pnpm run build` (`next build --webpack`) passed with 0 errors and generated static route `○ /works`.
+
+### 4. Continuation Context & Next Steps
+
+- Works Page albums grid now renders as a clean two-column grid across small screens and mobile devices as specified.
+- Awaiting user review and next instructions.

@@ -8,9 +8,19 @@ Phase 2: CMS Integration & Content Modeling
 
 ## Current Goal
 
-Completed: Fixed Cloudinary 25 MP limit issue in `ServicesGallery.tsx` and across the app with multi-tier fallback to direct unoptimized delivery. Awaiting user review.
+Completed: Responsiveness — Two-Column Album Grid on Small Screens in Works Page (`context/feature-specs/responsiveness/works-grid.md`). Awaiting user review.
 
 ## Completed
+
+- Feature: Two-Column Album Grid on Small Screens in Works Page (`context/feature-specs/responsiveness/works-grid.md`):
+  - Refactored `components/sections/WorksGallery.tsx`:
+    - Changed albums grid from single-column on mobile (`grid-cols-1 md:grid-cols-2`) to a two-column grid across small screens too (`grid-cols-2 gap-x-3.5 sm:gap-x-6 md:gap-x-8 lg:gap-x-12 gap-y-8 sm:gap-y-12 md:gap-y-16 lg:gap-y-24`).
+    - Adjusted container padding on mobile (`px-4 sm:px-8 md:px-12 lg:px-20`) to allow two album cards adequate breathing space and clean margins.
+    - Updated `AlbumCard` responsive image sizes from `(max-width: 767px) 100vw, 50vw` to `(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 50vw` for both `CldImage` and unoptimized `Image` fallback.
+    - Scaled album title typography with responsive clamp (`text-[clamp(1.125rem,0.9rem+0.8vw,2.25rem)]`) and metadata spacing (`mt-3 sm:mt-4 md:mt-5`) so titles remain proportional and prevent visual collision in compact 2-column mobile cards.
+    - Refined album metadata row (`categoryTitle` and `formattedDate`) to flex responsively (`flex-col sm:flex-row sm:items-center sm:justify-between gap-0.5 sm:gap-2 text-[10px] sm:text-xs`) with text truncation to prevent overflow.
+    - Adjusted top cards priority preloading from 2 to 4 (`priority={index < 4}`) to cover both cards in the initial 2 rows.
+  - Verified static compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`next build --webpack`).
 
 - Fix: Cloudinary 25 Megapixel Limit Error Resolution in `ServicesGallery.tsx` & Media Components:
   - Diagnosed root cause: Cloudinary free/standard plans enforce a hard 25 Megapixels limit on on-the-fly transformations. When camera images exceeding 25 MP (e.g. 26.31 MP `lcgptdokrgfjgl6jnjt7.jpg`) are processed by `CldImage` with transformations (`crop="fill"`, `gravity="auto"`, `w_...`), Cloudinary responds with HTTP 400 (`Maximum image size is 25 Megapixels. Requested 26.31 Megapixels`).
