@@ -95,24 +95,7 @@ export type Category = {
   _rev: string;
   title?: string;
   slug?: Slug;
-  description?: Array<{
-    children?: Array<{
-      marks?: Array<string>;
-      text?: string;
-      _type: "span";
-      _key: string;
-    }>;
-    style?: "normal" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "blockquote";
-    listItem?: "bullet" | "number";
-    markDefs?: Array<{
-      href?: string;
-      _type: "link";
-      _key: string;
-    }>;
-    level?: number;
-    _type: "block";
-    _key: string;
-  }>;
+  description?: string;
   coverImage?: string;
   publishedAt?: string;
 };
@@ -299,24 +282,7 @@ export type ALBUM_BY_SLUG_QUERY_RESULT = {
     _id: string;
     title: string | null;
     slug: Slug | null;
-    description: Array<{
-      children?: Array<{
-        marks?: Array<string>;
-        text?: string;
-        _type: "span";
-        _key: string;
-      }>;
-      style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
-      listItem?: "bullet" | "number";
-      markDefs?: Array<{
-        href?: string;
-        _type: "link";
-        _key: string;
-      }>;
-      level?: number;
-      _type: "block";
-      _key: string;
-    }> | null;
+    description: string | null;
     coverImage: string | null;
   } | null;
 } | null;
@@ -328,24 +294,7 @@ export type CATEGORIES_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
   slug: Slug | null;
-  description: Array<{
-    children?: Array<{
-      marks?: Array<string>;
-      text?: string;
-      _type: "span";
-      _key: string;
-    }>;
-    style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
-    listItem?: "bullet" | "number";
-    markDefs?: Array<{
-      href?: string;
-      _type: "link";
-      _key: string;
-    }>;
-    level?: number;
-    _type: "block";
-    _key: string;
-  }> | null;
+  description: string | null;
   coverImage: string | null;
   publishedAt: string | null;
 }>;
@@ -460,24 +409,7 @@ export type PACKAGES_BY_CATEGORY_QUERY_RESULT = Array<{
     _id: string;
     title: string | null;
     slug: Slug | null;
-    description: Array<{
-      children?: Array<{
-        marks?: Array<string>;
-        text?: string;
-        _type: "span";
-        _key: string;
-      }>;
-      style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
-      listItem?: "bullet" | "number";
-      markDefs?: Array<{
-        href?: string;
-        _type: "link";
-        _key: string;
-      }>;
-      level?: number;
-      _type: "block";
-      _key: string;
-    }> | null;
+    description: string | null;
     coverImage: string | null;
   } | null;
 }>;
@@ -498,24 +430,7 @@ export type PACKAGES_QUERY_RESULT = Array<{
     _id: string;
     title: string | null;
     slug: Slug | null;
-    description: Array<{
-      children?: Array<{
-        marks?: Array<string>;
-        text?: string;
-        _type: "span";
-        _key: string;
-      }>;
-      style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
-      listItem?: "bullet" | "number";
-      markDefs?: Array<{
-        href?: string;
-        _type: "link";
-        _key: string;
-      }>;
-      level?: number;
-      _type: "block";
-      _key: string;
-    }> | null;
+    description: string | null;
     coverImage: string | null;
   } | null;
 }>;

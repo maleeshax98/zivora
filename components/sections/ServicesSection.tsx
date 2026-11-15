@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useId, useRef, useState } from "react";
+import Image from "next/image";
 import { CldImage } from "next-cloudinary";
 import { useLenis } from "@/components/smooth-scroll";
 import { gsap, ScrollTrigger } from "@/lib/gsap";
@@ -57,6 +58,8 @@ export function ServicesSection({
   const headingId = `${sectionUid}-heading`;
 
   const { getLenis } = useLenis();
+
+  const [failedCldImages, setFailedCldImages] = useState<Record<string, boolean>>({});
 
   const sectionRef = useRef<HTMLElement>(null);
   const progressBarRef = useRef<HTMLDivElement>(null);
@@ -389,19 +392,36 @@ export function ServicesSection({
                   {/* Right Column: Cinematic preview image using shared CldImage */}
                   <div className="flex items-center justify-center md:col-span-4 lg:col-span-4">
                     <figure className="group relative aspect-[16/10] max-h-[28dvh] w-full max-w-md overflow-hidden rounded-none border border-surface-border/70 bg-surface-subtle shadow-sm sm:aspect-[4/3] sm:max-h-[34dvh] md:aspect-[4/5] md:max-h-none md:max-w-none">
-                      <CldImage
-                        src={service.imageUrl}
-                        alt={service.imageAlt}
-                        width={800}
-                        height={1000}
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 400px"
-                        config={{
-                          cloud: {
-                            cloudName: resolveCloudName(service.imageUrl),
-                          },
-                        }}
-                        className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
-                      />
+                      {failedCldImages[service.id] || !service.imageUrl.includes("res.cloudinary.com") ? (
+                        <Image
+                          src={service.imageUrl}
+                          alt={service.imageAlt}
+                          fill
+                          unoptimized
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 400px"
+                          className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                        />
+                      ) : (
+                        <CldImage
+                          src={service.imageUrl}
+                          alt={service.imageAlt}
+                          width={800}
+                          height={1000}
+                          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 33vw, 400px"
+                          config={{
+                            cloud: {
+                              cloudName: resolveCloudName(service.imageUrl),
+                            },
+                          }}
+                          className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-105"
+                          onError={() =>
+                            setFailedCldImages((prev) => ({
+                              ...prev,
+                              [service.id]: true,
+                            }))
+                          }
+                        />
+                      )}
                     </figure>
                   </div>
                 </div>

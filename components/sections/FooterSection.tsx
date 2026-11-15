@@ -140,7 +140,7 @@ export function FooterSection({
                 WORKS
               </Link>
               <Link
-                href="/#services"
+                href="/services"
                 data-cursor="expand"
                 className="font-mono text-xs sm:text-sm uppercase tracking-[0.18em] text-copy-secondary hover:text-copy-primary transition-colors"
               >

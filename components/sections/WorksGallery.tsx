@@ -82,6 +82,7 @@ function TopLoadingBar({ progress, isVisible }: { progress: number; isVisible: b
  */
 export function AlbumCard({ album, priority = false }: { album: AlbumItem; priority?: boolean }) {
   const [imageError, setImageError] = useState(false);
+  const [cldError, setCldError] = useState(false);
   const slug = album.slug?.current || album._id;
   const isCloudinary =
     typeof album.coverImage === "string" && album.coverImage.includes("res.cloudinary.com");
@@ -98,7 +99,7 @@ export function AlbumCard({ album, priority = false }: { album: AlbumItem; prior
         className="relative block aspect-[4/5] w-full overflow-hidden bg-surface-subtle border border-surface-border/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
       >
         {album.coverImage && !imageError ? (
-          isCloudinary ? (
+          isCloudinary && !cldError ? (
             <CldImage
               src={album.coverImage}
               alt={album.title || "Album Cover"}
@@ -110,7 +111,7 @@ export function AlbumCard({ album, priority = false }: { album: AlbumItem; prior
                   cloudName: resolveCloudName(album.coverImage),
                 },
               }}
-              onError={() => setImageError(true)}
+              onError={() => setCldError(true)}
               className="object-cover object-center w-full h-full transition-transform duration-700 ease-out group-hover:scale-[1.03] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
             />
           ) : (
@@ -191,6 +192,7 @@ export function WorksGallery({ className }: WorksGalleryProps) {
   const [hasMore, setHasMore] = useState<boolean>(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isCategorySwitching, setIsCategorySwitching] = useState(false);
+  const [cldFailedCovers, setCldFailedCovers] = useState<Record<string, boolean>>({});
 
   const entranceRef = useRef<HTMLDivElement>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
@@ -471,7 +473,8 @@ export function WorksGallery({ className }: WorksGalleryProps) {
                 {/* Faded background cover image */}
                 <div className="absolute inset-0">
                   {typeof activeCategory.coverImage === "string" &&
-                  activeCategory.coverImage.includes("res.cloudinary.com") ? (
+                  activeCategory.coverImage.includes("res.cloudinary.com") &&
+                  !cldFailedCovers[activeCategory.slug || activeCategory.title] ? (
                     <CldImage
                       src={activeCategory.coverImage}
                       alt={activeCategory.title}
@@ -483,6 +486,12 @@ export function WorksGallery({ className }: WorksGalleryProps) {
                           cloudName: resolveCloudName(activeCategory.coverImage),
                         },
                       }}
+                      onError={() =>
+                        setCldFailedCovers((prev) => ({
+                          ...prev,
+                          [activeCategory.slug || activeCategory.title]: true,
+                        }))
+                      }
                       className="object-cover object-center w-full h-full opacity-40 dark:opacity-35 transition-opacity duration-700"
                     />
                   ) : (

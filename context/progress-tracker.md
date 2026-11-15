@@ -8,9 +8,38 @@ Phase 2: CMS Integration & Content Modeling
 
 ## Current Goal
 
-Completed: Fetch newest 6 images from HeroImages and show them with fluid responsive sizing and no horizontal scrollbar across all screen sizes. Awaiting user review.
+Completed: Fixed Cloudinary 25 MP limit issue in `ServicesGallery.tsx` and across the app with multi-tier fallback to direct unoptimized delivery. Awaiting user review.
 
 ## Completed
+
+- Fix: Cloudinary 25 Megapixel Limit Error Resolution in `ServicesGallery.tsx` & Media Components:
+  - Diagnosed root cause: Cloudinary free/standard plans enforce a hard 25 Megapixels limit on on-the-fly transformations. When camera images exceeding 25 MP (e.g. 26.31 MP `lcgptdokrgfjgl6jnjt7.jpg`) are processed by `CldImage` with transformations (`crop="fill"`, `gravity="auto"`, `w_...`), Cloudinary responds with HTTP 400 (`Maximum image size is 25 Megapixels. Requested 26.31 Megapixels`).
+  - Refactored `ServicesGallery.tsx`:
+    - Removed `crop="fill"`, `gravity="auto"`, `quality="auto"`, and `format="auto"` from `<CldImage>`, preventing forced AI smart cropping and excessive processing overhead.
+    - Added responsive `sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 800px"`.
+    - Implemented resilient multi-tier fallback: upon `CldImage` transformation error, seamlessly falls back to Next.js `<Image unoptimized>` which requests the raw uploaded image directly without Cloudinary transformation parameters, rendering the full-resolution photo cleanly with zero layout shift. Only if the raw asset itself fails does it fall back to the placeholder box.
+  - Hardened `ServicesSection.tsx`, `PackagesGallery.tsx`, and `WorksGallery.tsx` with identical unoptimized fallbacks to ensure high-resolution camera uploads never cause broken image boxes across the entire portfolio.
+  - Verified static compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`next build --webpack`).
+
+- Schema & Frontend Update: Category `description` Migrated from Block Array to String:
+  - Updated `studio/schemaTypes/category.ts`: changed `description` field from `type: 'array', of: [{ type: 'block' }]` to `type: 'string'`, and cleaned up unused `defineArrayMember` import.
+  - Re-extracted schema to `studio/schema.json` and regenerated type definitions in `zivora/sanity.types.ts` via `sanity typegen generate`, typing `Category.description` and all category query projections (`CATEGORIES_QUERY_RESULT`, `PACKAGES_BY_CATEGORY_QUERY_RESULT`, `PACKAGES_QUERY_RESULT`, `ALBUM_BY_SLUG_QUERY_RESULT`) as `string | null`.
+  - Updated `zivora/app/page.tsx`: adapted `extractPlainTextFromPortableText` and `getCategories()` to check `typeof cat.description === "string"`, preserving string descriptions directly without losing content or throwing parsing discrepancies, with fallback for any legacy block structures.
+  - Updated `zivora/components/sections/ServicesGallery.tsx`: updated `service.description` consumption to handle plain string directly, and removed artificial test filter in `getEditorialDescription()` to ensure user-defined category descriptions in Sanity Studio are displayed faithfully.
+  - Verified compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and Sanity Studio build (`sanity build`).
+
+- Feature Spec 17: Dedicated Services Page (`context/feature-specs/services/01-initial.md`):
+  - Created dedicated page route `app/services/page.tsx` mounting `<ServicesGallery />` inside `<Suspense fallback={null}>` and `<FooterSection />` with custom SEO metadata.
+  - References the file named "ZIVORA" verbatim to align with the broader project architecture.
+  - Full-viewport container (`min-h-[100dvh]`): Expansive editorial feel leveraging whitespace design principles, with fluid centerpiece typography ("SERVICES.") at `clamp(3.5rem, 15vw, 16.5rem)` paired with an italic brand accent and a top "DISCIPLINES & COMMISSIONS" label.
+  - Sequentially stacked asymmetrical service blocks: Below the header, dynamically maps categories fetched from Sanity Content Lake into sequentially stacked asymmetrical blocks (`gap-28 sm:gap-40 lg:gap-56`).
+  - Asymmetrical Layout: Alternating image-left / text-right and text-left / image-right layout across 12-column grid (`md:col-span-7` vs `md:col-span-5`) with varied aspect ratios (`aspect-[4/5]`, `aspect-[16/10]`, `aspect-[3/2]`), fluidly collapsing into single, vertically stacked columns on mobile devices with touch-friendly spacing.
+  - Media Integration: Strictly uses `CldImage` from `next-cloudinary` with `resolveCloudName()` and `config={{ cloud: { cloudName } }}`, responsive sizes, and graceful fallback to an ambient brand container on missing/failed images with zero CLS.
+  - Precise Editorial Descriptions & Categories: Dynamically extracts PortableText plain text from Sanity category documents with refined editorial fallbacks.
+  - Action Buttons per Service: Added clean, minimalist action buttons redirecting to filtered packages (`/packages?category=${serviceSlug}`) and works (`/works?category=${serviceSlug}`) with Lucide arrow icons and touch-friendly hit areas (`min-h-[44px]`).
+  - Motion (GSAP & Lenis): Staggered header entrance animation revealing eyebrow, massive headline, and scroll indicator; GSAP `ScrollTrigger` tracking vertical scroll depth to animate each subsequent service block into view (`y: 38` to `0`, `opacity: 0` to `1`, `duration: 1.05`), with static fallback for `prefers-reduced-motion: reduce`.
+  - Navigation Integration: Added "Services" link to `Navbar.tsx` (`NAV_LINKS`) and updated `FooterSection.tsx` to link "SERVICES" to `/services`.
+  - Verified static compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`) confirming static route generation (`○ /services`), and Sanity Studio build (`sanity build`).
 
 - Feature: HeroImages Newest 6 Fetch & Fluid Responsive Fit (No Horizontal Scrollbar):
   - Updated `HERO_IMAGES_QUERY` in `lib/sanity/queries.ts`: ordered by `publishedAt desc, _createdAt desc` with `[0...6]` limit to fetch the newest 6 hero image documents from Sanity Content Lake.

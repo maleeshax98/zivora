@@ -212,6 +212,7 @@ export function PackagesGallery({ className }: PackagesGalleryProps) {
   const [isCategorySwitching, setIsCategorySwitching] = useState(false);
   const [loadingProgress, setLoadingProgress] = useState(25);
   const [showTopLoadingBar, setShowTopLoadingBar] = useState(true);
+  const [cldFailedCovers, setCldFailedCovers] = useState<Record<string, boolean>>({});
 
   const initialParamRef = useRef(categoryParam);
 
@@ -370,7 +371,8 @@ export function PackagesGallery({ className }: PackagesGalleryProps) {
                 {/* Faded Background Cover Image */}
                 <div className="absolute inset-0">
                   {typeof activeCategory.coverImage === "string" &&
-                  activeCategory.coverImage.includes("res.cloudinary.com") ? (
+                  activeCategory.coverImage.includes("res.cloudinary.com") &&
+                  !cldFailedCovers[activeCategory.slug || activeCategory.id] ? (
                     <CldImage
                       src={activeCategory.coverImage}
                       alt={activeCategory.title || "Category Cover"}
@@ -382,6 +384,12 @@ export function PackagesGallery({ className }: PackagesGalleryProps) {
                           cloudName: resolveCloudName(activeCategory.coverImage),
                         },
                       }}
+                      onError={() =>
+                        setCldFailedCovers((prev) => ({
+                          ...prev,
+                          [activeCategory.slug || activeCategory.id]: true,
+                        }))
+                      }
                       className="object-cover object-center w-full h-full opacity-40 dark:opacity-35 transition-opacity duration-700"
                     />
                   ) : (

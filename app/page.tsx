@@ -87,6 +87,7 @@ async function getFeaturedWorks(): Promise<FeaturedProjectItem[]> {
 }
 
 function extractPlainTextFromPortableText(blocks: unknown): string {
+  if (typeof blocks === "string") return blocks;
   if (!Array.isArray(blocks) || blocks.length === 0) return "";
   return blocks
     .map((block) => {
@@ -108,10 +109,11 @@ async function getCategories(): Promise<ServiceItem[]> {
     if (categories && categories.length > 0) {
       return categories.map((cat, index) => {
         const slug = cat.slug?.current || "";
-        const portableDescription = extractPlainTextFromPortableText(
-          cat.description,
-        );
-        const description = portableDescription.trim() || undefined;
+        const rawDescription =
+          typeof cat.description === "string"
+            ? cat.description
+            : extractPlainTextFromPortableText(cat.description);
+        const description = rawDescription.trim() || undefined;
 
         return {
           id: cat._id,
