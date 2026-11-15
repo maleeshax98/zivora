@@ -1487,4 +1487,190 @@
 - `<UserFeedback />` is now properly positioned after `<SampleGallery />` with calibrated scroll runway, smooth camera dives, rack-focus transitions between all cards (1 through 5), and graceful exit holds.
 - Next scheduled task per roadmap: Album Layout & Masonry Grid or category-filtered portfolio views.
 
+## Session: 2026-11-15 — Works Page: Album Fetching & Infinite Scroll (01-intial-setup.md)
+
+### 1. Session Summary
+
+- Read `zivora/context/feature-specs/works/01-intial-setup.md` specifying the initial setup for `/works` page:
+  - Top loading bar when loading
+  - Cinematic entrance text reveal and hide when loaded
+  - Album display with responsive grid
+  - Card specification: cover image, album title and date below image, link title and image to single album page (`/works/${slug}`) without implementing single album page yet
+  - Infinite scroll with non-destructive page appending and bottom loading text indicator
+  - Paginated backend fetch from Sanity CMS
+- Marked feature as in-progress in `zivora/context/progress-tracker.md`.
+- Defined `WORKS_PAGE_ALBUMS_QUERY` with range slice `[$start...$end]` and `WORKS_TOTAL_COUNT_QUERY` in `zivora/lib/sanity/queries.ts`.
+- Extracted schemas and regenerated type definitions in `zivora/sanity.types.ts` via `sanity typegen generate`.
+- Created Server Action `fetchWorksAlbumsAction(start, limit)` in `zivora/app/works/actions.ts`.
+- Created client component `WorksGallery` in `zivora/components/sections/WorksGallery.tsx`:
+  - `TopLoadingBar`: animated hairline progress bar positioned at the top of the site (`fixed top-0 left-0 right-0 z-50 h-[2.5px]`).
+  - Cinematic entrance text sequence: letter-spaced "SELECTED WORKS" with "ZIVORA // ARCHIVE" subtext, animated with GSAP blur-to-clear and opacity, unhurried reading hold, and smooth blur/fade out before transitioning to the album archive (with `prefers-reduced-motion: reduce` fallback).
+  - Responsive 2-column album card grid (`grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-16 lg:gap-x-12 lg:gap-y-24`).
+  - `AlbumCard`: cover image in `aspect-[4/5]` with `CldImage` (and graceful fallback for non-Cloudinary images), hover zoom, formatted date (e.g. "Nov 18, 2026"), category badge, and links both the cover image and album title to `/works/${slug}` without implementing the single album page yet.
+  - Infinite scroll with `IntersectionObserver` sentinel triggering subsequent page fetches.
+  - Non-destructive append: keeps existing albums in view without clearing the page while loading next albums, displaying an editorial bottom loading indicator (`[ Loading more works... ]` with brand spinner).
+  - End-of-archive marker (`— ALL WORKS LOADED —`) once all albums are loaded.
+- Created route page `zivora/app/works/page.tsx` mounting `<WorksGallery />` and `<FooterSection />` with metadata.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`next build --webpack`), confirming static route generation (`/works`).
+- Moved feature to completed in `zivora/context/progress-tracker.md`.
+
+### 2. Architectural & Engineering Decisions
+
+- **Paginated GROQ Queries & TypeGen Automation:** Defined range slice `[$start...$end]` on `album` documents ordered by `publishedAt desc, _createdAt desc`. Running `sanity typegen generate` produced typed `WORKS_PAGE_ALBUMS_QUERY_RESULT` without manual type casting.
+- **Server Action Architecture:** Encapsulated pagination in `fetchWorksAlbumsAction(start, limit)` in `app/works/actions.ts` using Next.js `"use server"`, querying Sanity via `client.fetch` alongside `count(*)` to evaluate `hasMore`.
+- **Three-Stage UX State Machine:** Structured `WorksGallery` with distinct states: `"loading"` (top hairline loading bar across site) -> `"entrance"` (cinematic headline reveal and hide) -> `"ready"` (reveals album grid with staggered cards).
+- **Non-Destructive Infinite Scroll Append:** Subsequent page fetches preserve existing albums using `setAlbums(prev => [...prev, ...uniqueNew])`, with a bottom loading indicator (`[ Loading more works... ]`) and automatic deduplication by `_id`.
+- **Single Album Linking Without Page Implementation:** Both cover image and title link to `/works/${slug}` (where `slug` is `album.slug.current || album._id`) adhering to the spec constraint to not implement the single album page yet.
+- **Zero Barrel Files & Code Standards:** Adhered strictly to direct component imports and exports, dual-theme tokens (`bg-background`, `text-copy-primary`, `text-brand`), and `prefers-reduced-motion` compliance.
+
+### 3. Implementation State
+
+- `zivora/lib/sanity/queries.ts`: Added `WORKS_PAGE_ALBUMS_QUERY` and `WORKS_TOTAL_COUNT_QUERY`.
+- `zivora/sanity.types.ts`: Regenerated Sanity types with `WORKS_PAGE_ALBUMS_QUERY_RESULT`.
+- `zivora/app/works/actions.ts`: Created Server Action for paginated album fetching.
+- `zivora/components/sections/WorksGallery.tsx`: Created with `TopLoadingBar`, cinematic entrance text, responsive album grid, `AlbumCard`, and infinite scroll.
+- `zivora/app/works/page.tsx`: Created Works route mounting `<WorksGallery />` and `<FooterSection />`.
+- `zivora/context/progress-tracker.md`: Updated to completed.
+- Verification:
+  - `pnpm -C zivora exec tsc --noEmit` (0 errors)
+  - `pnpm -C zivora run lint` (0 errors, 0 warnings)
+  - `pnpm -C zivora run build` (`next build --webpack` passed, 0 errors, `/works` static page generated)
+
+### 4. Continuation Context & Next Steps
+
+- `/works` page is now live and functional with paginated album fetching, top loading progress bar, cinematic entrance sequence, responsive cards, and infinite scroll.
+- Next step per roadmap / user instruction: Implement single album page `/works/[slug]` or next approved feature.
+
+## Session: 2026-11-15 — Works Page: Category Filtering, Faded Cover Image Hero & Shareable URLs (01-intial-setup.md)
+
+### 1. Session Summary
+
+- Addressed user feedback and updated `zivora/context/feature-specs/works/01-intial-setup.md`:
+  - Renamed all occurrences from "Selected Works" to "All Works" / "ALL WORKS".
+  - Added category filter navigation at the top of the works section with an "ALL" option.
+  - Implemented category-filtered queries with pagination in Sanity.
+  - Integrated shareable URL query parameters (`?category=slug`) using `useSearchParams` and Next.js router (`router.push(..., { scroll: false })`), with `<Suspense>` boundary in `app/works/page.tsx`.
+  - Replaced the separate category text and hard-boxed cover image with a unified faded cover image hero banner: uses softened opacity (`opacity-40 dark:opacity-35`) layered with multi-directional gradient overlays (fading into the canvas from bottom, top, and sides) with the category name rendered directly on top in large serif typography.
+  - Enforced a clean, human, authentic editorial photography layout, strictly eliminating artificial "AI look" elements (no `//`, no `[ ARCHIVE // 2026 ]`, no unnecessary tags or fake symbols).
+- Defined `WORKS_CATEGORY_ALBUMS_QUERY` with range slice `[$start...$end]` and `WORKS_CATEGORY_TOTAL_COUNT_QUERY` in `zivora/lib/sanity/queries.ts`.
+- Extracted schemas and regenerated type definitions in `zivora/sanity.types.ts` via `sanity typegen generate`.
+- Added `fetchWorksCategoriesAction()` and updated `fetchWorksAlbumsAction(start, limit, categorySlug)` in `zivora/app/works/actions.ts`.
+- Updated `WorksGallery` in `zivora/components/sections/WorksGallery.tsx` to handle category switching, shareable URL updates, faded category cover image hero with gradient overlays, and infinite scroll for the active category filter.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`next build --webpack`), confirming static route generation (`/works`).
+- Updated `zivora/context/progress-tracker.md` to completed.
+
+### 2. Architectural & Engineering Decisions
+
+- **Faded Category Cover Image with Gradient Overlay:** Replaced the hard-bordered rectangular image box with an atmospheric background image layer (`opacity-40 dark:opacity-35`) combined with multi-directional gradient overlays (`from-background via-background/60 to-transparent`, `from-background via-transparent to-background`, and edge fades). The category name is positioned directly over the image in high-contrast editorial typography (`relative z-10 text-copy-primary`), eliminating boxed borders and melting into the page background.
+- **Shareable URL Filtering & Suspense Prerendering:** Managed active category in URL parameter `?category=slug` while keeping the default state at `/works` for "all". Wrapped `<WorksGallery />` in `<Suspense fallback={null}>` in `app/works/page.tsx` to guarantee full compatibility with Next.js 16 static prerendering and hydration.
+- **Elimination of Artificial "AI Look":** Cleaned all robotic badges, slashes, and technical filler text (`ZIVORA // ARCHIVE`, `[ ARCHIVE // 2026 ]`, `CURATED VISUAL ARCHIVE`, `— ALL WORKS LOADED —`). Left only authentic, high-end photography typography, clean category tabs, and simple whitespace.
+- **Category-Aware Infinite Scroll:** Integrated `activeCategorySlug` into `fetchWorksAlbumsAction` and the `IntersectionObserver` sentinel. Subsequent batches are appended to the active category's album list without clearing existing albums, and category switching re-initiates pagination from index 0.
+
+### 3. Implementation State
+
+- `zivora/context/feature-specs/works/01-intial-setup.md`: Updated specification.
+- `zivora/lib/sanity/queries.ts`: Added `WORKS_CATEGORY_ALBUMS_QUERY` and `WORKS_CATEGORY_TOTAL_COUNT_QUERY`.
+- `zivora/sanity.types.ts`: Regenerated types with `WORKS_CATEGORY_ALBUMS_QUERY_RESULT`.
+- `zivora/app/works/actions.ts`: Added `fetchWorksCategoriesAction` and updated `fetchWorksAlbumsAction`.
+- `zivora/components/sections/WorksGallery.tsx`: Updated with "ALL WORKS" entrance, category filter tabs, shareable URL params, faded category cover hero with gradient overlays and overlaid title, and clean typography.
+- `zivora/app/works/page.tsx`: Wrapped `<WorksGallery />` in `<Suspense>`.
+- `zivora/context/progress-tracker.md`: Updated to completed.
+- Verification:
+  - `pnpm -C zivora exec tsc --noEmit` (0 errors)
+  - `pnpm -C zivora run lint` (0 errors, 0 warnings)
+  - `pnpm -C zivora run build` (`next build --webpack` passed, 0 errors, `/works` static page generated)
+
+### 4. Continuation Context & Next Steps
+
+- Works page `/works` now features "All Works" naming, top category navigation with 'ALL', shareable URL filtering, faded category cover banner with overlaid name, and infinite scroll with clean editorial aesthetics.
+- Next step per roadmap / user instruction: Implement single album page `/works/[slug]` or next approved feature.
+
+## Session: 2026-11-15 — Single Album Page: Cinematic Intro, Pinterest Grid, YouTube Videos, Filter Tabs & Cloudinary Infinite Scroll (02-single-work.md)
+
+### 1. Session Summary
+
+- Read `zivora/context/feature-specs/works/02-single-work.md` and marked as in-progress in `zivora/context/progress-tracker.md`.
+- Implemented single album presentation per specification:
+  - Created dynamic routes `zivora/app/works/[slug]/page.tsx` and `zivora/app/work/[slug]/page.tsx` (with `zivora/app/work/page.tsx` redirecting to `/works`), ensuring both singular `/work/[slug]` and plural `/works/[slug]` routes work seamlessly with Next.js 16 Partial Prerendering and `generateStaticParams`.
+  - Created `zivora/components/sections/SingleWorkGallery.tsx` (`"use client"`) implementing the single album view with direct exports and zero barrel files.
+  - Implemented top hairline loading progress bar (`TopLoadingBar`) active during initial data load.
+  - Built GSAP cinematic entrance sequence (`phase: "intro"`): animates album title (blur-to-clear & opacity), followed by description, followed by event date, holds for deliberate reading pause (1.35s), and smoothly blurs and fades out before transitioning into the ready content view, with static immediate fallback for `prefers-reduced-motion: reduce`.
+  - Built Pinterest-style masonry photo grid (`columns-2 sm:columns-2 md:columns-3 lg:columns-4 [column-fill:_balance]`), strictly enforcing 2 columns on mobile devices, with natural aspect ratio preservation, responsive `CldImage`, sharp borders, and hover scrims.
+  - Implemented Cloudinary folder photo pagination Server Action `fetchAlbumPhotosAction(folderName, nextCursor, limit)` in `zivora/app/works/actions.ts` querying Cloudinary Search API with folder expressions and cursor pagination.
+  - Built infinite scroll via `IntersectionObserver` sentinel, appending newly loaded photos to the bottom of the grid (`setPhotos(prev => [...prev, ...newPhotos])`) while preserving previously loaded photos in their exact positions, complete with bottom loading indicator.
+  - Built YouTube video section displaying responsive 16:9 embedded players (`aspect-video`) using `iframe` with video ID extraction from URLs, video numbering ("Film 01"), direct external links, and clean empty state if no videos are attached.
+  - Built fixed bottom tab bar for Photos and Videos filtering with a faded gradient backdrop (`bg-gradient-to-t from-background via-background/90 to-transparent`), active brand indicator styling (`bg-brand text-white dark:text-zinc-950`), and counter badges.
+  - Built interactive lightbox modal for full-resolution photograph inspection with keyboard navigation (Escape to close, Left/Right arrow keys to navigate) and image counter.
+  - Updated `ALBUM_BY_SLUG_QUERY` in `zivora/lib/sanity/queries.ts` to support both `slug.current == $slug` and `_id == $slug`, and regenerated types in `zivora/sanity.types.ts`.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`next build --webpack`), confirming static route generation for `/work`, `/work/[slug]`, `/works`, and `/works/[slug]`.
+- Updated `zivora/context/progress-tracker.md` to completed.
+
+### 2. Architectural & Engineering Decisions
+
+- **Dual-Route Compatibility (`/work/[slug]` & `/works/[slug]`):** Both singular `/work/[slug]` and plural `/works/[slug]` are supported so links from `/works` (`AlbumCard` uses `/works/${slug}`) and direct user navigation specified in `02-single-work.md` (`/work/[slug]`) resolve cleanly without 404s. `zivora/app/work/page.tsx` redirects to `/works`.
+- **Three-Stage UX State Machine:** Structured `SingleWorkGallery` with states: `"loading"` (top hairline loading bar) -> `"intro"` (GSAP blur-to-clear cinematic text entrance and fade out) -> `"ready"` (reveals header, media collections, and fixed bottom filter bar).
+- **Pinterest-Style Masonry Grid:** Used CSS multi-column layout (`columns-2 ... md:columns-3 lg:columns-4 [column-fill:_balance]`) with `break-inside-avoid mb-3 sm:mb-4`, enforcing strictly 2 columns on mobile devices and 3-4 columns on desktop while preserving natural aspect ratios without JavaScript column splitting or CLS.
+- **Append-to-Bottom Infinite Scroll:** Configured `handleLoadMorePhotos` to deduplicate and append new items to the bottom (`setPhotos(prev => [...prev, ...uniqueIncoming])`), guaranteeing that first loaded photos remain in their exact positions.
+- **Fixed Bottom Tabs with Faded Gradient:** Built `nav` fixed at `bottom-0 inset-x-0` with `bg-gradient-to-t from-background via-background/90 to-transparent`, containing a centered pill button group with `PHOTOS` and `VIDEOS` tabs, active brand styling, and counter badges.
+- **Next.js 16 Partial Prerendering & Cache Components:** Handled dynamic route `[slug]` parameters by providing `generateStaticParams()` and wrapping the async data loader in `<Suspense fallback={null}>` in `app/works/[slug]/page.tsx`, allowing the outer shell (Navbar, Footer) to statically prerender while dynamic content streams in.
+
+### 3. Implementation State
+
+- `zivora/lib/sanity/queries.ts`: Updated `ALBUM_BY_SLUG_QUERY` to support both `slug.current == $slug` and `_id == $slug`.
+- `zivora/sanity.types.ts`: Regenerated types via `sanity typegen generate`.
+- `zivora/app/works/actions.ts`: Added `fetchAlbumBySlugAction` and `fetchAlbumPhotosAction`.
+- `zivora/components/sections/SingleWorkGallery.tsx`: Created with `TopLoadingBar`, cinematic intro sequence, Pinterest photo masonry grid, Cloudinary infinite scroll, YouTube embeds, fixed bottom filter tabs, and image lightbox.
+- `zivora/app/works/[slug]/page.tsx`: Created single album route with metadata, `generateStaticParams`, and Suspense boundary.
+- `zivora/app/work/[slug]/page.tsx`: Created compatibility route re-exporting from `@/app/works/[slug]/page`.
+- `zivora/app/work/page.tsx`: Created redirect to `/works`.
+- `zivora/context/progress-tracker.md`: Updated to completed.
+- Verification:
+  - `pnpm -C zivora exec tsc --noEmit` (0 errors)
+  - `pnpm -C zivora run lint` (0 errors, 0 warnings)
+  - `pnpm -C zivora run build` (`next build --webpack` passed, 0 errors, static pages generated for `/work`, `/work/[slug]`, `/works`, and `/works/[slug]`)
+
+### 4. Continuation Context & Next Steps
+
+- Single album page is fully implemented and operational across `/works/[slug]` and `/work/[slug]`.
+- Next step per roadmap / user instruction: Await user direction for the next feature or enhancement.
+
+## Session: 2026-11-15 — Single Album Page Header Refinement: Centered Layout (Title, Description, Date Only)
+
+### 1. Session Summary
+
+- User requested to refine the single album header: instead of left-aligning the title, show the Title, followed by Description, followed by Date only in the middle.
+- Updated `zivora/components/sections/SingleWorkGallery.tsx`:
+  - Centered the `<header>` block (`max-w-3xl mx-auto flex flex-col items-center text-center mb-14 sm:mb-20`).
+  - Rendered `Title` (`<h1>`), followed by `plainDescription` (`<p>`), followed by `formattedDate` (`<p>`) only.
+  - Removed extraneous inline clutter (category and photo counts) from the centered header to keep it pure and editorial.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`next build --webpack`).
+- Updated `zivora/context/progress-tracker.md` to completed.
+
+## Session: 2026-11-15 — Single Album Route: Removed Hardcoded Fallback Slugs
+
+### 1. Session Summary
+
+- Removed hardcoded fallback slugs (`album-1` through `album-5`) from `zivora/app/works/[slug]/page.tsx`.
+- Removed `generateStaticParams` and configured `export const instant = false;` in `zivora/app/works/[slug]/page.tsx` and `zivora/app/work/[slug]/page.tsx`, adhering to Next.js 16 Cache Components and Partial Prerendering architecture.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`next build --webpack`), confirming all dynamic PPR routes build cleanly without hardcoded static params.
+- Updated `zivora/context/progress-tracker.md` to completed.
+
+## Session: 2026-11-15 — Album Description Schema Update (Portable Text to Text String)
+
+### 1. Session Summary
+
+- Schema change in `studio/schemaTypes/album.ts`: updated `description` field from array of blocks (Portable Text) to `type: 'text', rows: 3, validation: (rule) => rule.required()`.
+- Extracted updated schema (`sanity schemas extract --force`) and regenerated types in `zivora/sanity.types.ts` via `sanity typegen generate`.
+- Updated `SingleWorkGallery.tsx` frontend component:
+  - Consumed `description` directly as a string (`typeof album?.description === 'string' ? album.description.trim() : ...`), maintaining defensive fallback for legacy blocks.
+  - Used in both the cinematic intro sequence and the centered header block.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and Sanity Studio build (`sanity build`).
+- Updated `zivora/context/progress-tracker.md` to completed.
+
+
+
+
+
+
+
 

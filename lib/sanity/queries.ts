@@ -20,7 +20,7 @@ export const ALBUMS_QUERY = defineQuery(`
 `)
 
 export const ALBUM_BY_SLUG_QUERY = defineQuery(`
-  *[_type == "album" && slug.current == $slug][0]{
+  *[_type == "album" && (slug.current == $slug || _id == $slug)][0]{
     _id,
     title,
     slug,
@@ -90,6 +90,52 @@ export const FEEDBACKS_QUERY = defineQuery(`
     imageUrl,
     publishedAt
   }
+`)
+
+export const WORKS_PAGE_ALBUMS_QUERY = defineQuery(`
+  *[_type == "album" && defined(slug.current)] | order(publishedAt desc, _createdAt desc)[$start...$end]{
+    _id,
+    title,
+    slug,
+    description,
+    eventDate,
+    cloudinaryFolderName,
+    coverImage,
+    youtubeVideoLinks,
+    publishedAt,
+    category->{
+      _id,
+      title,
+      slug
+    }
+  }
+`)
+
+export const WORKS_TOTAL_COUNT_QUERY = defineQuery(`
+  count(*[_type == "album" && defined(slug.current)])
+`)
+
+export const WORKS_CATEGORY_ALBUMS_QUERY = defineQuery(`
+  *[_type == "album" && defined(slug.current) && category->slug.current == $categorySlug] | order(publishedAt desc, _createdAt desc)[$start...$end]{
+    _id,
+    title,
+    slug,
+    description,
+    eventDate,
+    cloudinaryFolderName,
+    coverImage,
+    youtubeVideoLinks,
+    publishedAt,
+    category->{
+      _id,
+      title,
+      slug
+    }
+  }
+`)
+
+export const WORKS_CATEGORY_TOTAL_COUNT_QUERY = defineQuery(`
+  count(*[_type == "album" && defined(slug.current) && category->slug.current == $categorySlug])
 `)
 
 

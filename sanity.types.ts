@@ -15,6 +15,35 @@
 export declare const internalGroqTypeReferenceTo: unique symbol;
 
 // Source: schema.json
+export type CategoryReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "category";
+};
+
+export type Package = {
+  _id: string;
+  _type: "package";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  title?: string;
+  slug?: Slug;
+  category?: CategoryReference;
+  deliverables?: Array<string>;
+  price?: string;
+  order?: number;
+  badge?: string;
+  isHighlited?: boolean;
+};
+
+export type Slug = {
+  _type: "slug";
+  current?: string;
+  source?: string;
+};
+
 export type Feedback = {
   _id: string;
   _type: "feedback";
@@ -28,13 +57,6 @@ export type Feedback = {
   publishedAt?: string;
 };
 
-export type CategoryReference = {
-  _ref: string;
-  _type: "reference";
-  _weak?: boolean;
-  [internalGroqTypeReferenceTo]?: "category";
-};
-
 export type Album = {
   _id: string;
   _type: "album";
@@ -43,24 +65,7 @@ export type Album = {
   _rev: string;
   title?: string;
   slug?: Slug;
-  description?: Array<{
-    children?: Array<{
-      marks?: Array<string>;
-      text?: string;
-      _type: "span";
-      _key: string;
-    }>;
-    style?: "normal" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "blockquote";
-    listItem?: "bullet" | "number";
-    markDefs?: Array<{
-      href?: string;
-      _type: "link";
-      _key: string;
-    }>;
-    level?: number;
-    _type: "block";
-    _key: string;
-  }>;
+  description?: string;
   eventDate?: string;
   category?: CategoryReference;
   cloudinaryFolderName?: string;
@@ -68,12 +73,6 @@ export type Album = {
   youtubeVideoLinks?: Array<string>;
   featured?: boolean;
   publishedAt?: string;
-};
-
-export type Slug = {
-  _type: "slug";
-  current?: string;
-  source?: string;
 };
 
 export type Category = {
@@ -232,10 +231,11 @@ export type Geopoint = {
 };
 
 export type AllSanitySchemaTypes =
-  | Feedback
   | CategoryReference
-  | Album
+  | Package
   | Slug
+  | Feedback
+  | Album
   | Category
   | HeroImages
   | SanityImagePaletteSwatch
@@ -256,24 +256,7 @@ export type ALBUMS_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
   slug: Slug | null;
-  description: Array<{
-    children?: Array<{
-      marks?: Array<string>;
-      text?: string;
-      _type: "span";
-      _key: string;
-    }>;
-    style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
-    listItem?: "bullet" | "number";
-    markDefs?: Array<{
-      href?: string;
-      _type: "link";
-      _key: string;
-    }>;
-    level?: number;
-    _type: "block";
-    _key: string;
-  }> | null;
+  description: string | null;
   eventDate: string | null;
   cloudinaryFolderName: string | null;
   coverImage: string | null;
@@ -288,29 +271,12 @@ export type ALBUMS_QUERY_RESULT = Array<{
 
 // Source: ../zivora/lib/sanity/queries.ts
 // Variable: ALBUM_BY_SLUG_QUERY
-// Query: *[_type == "album" && slug.current == $slug][0]{    _id,    title,    slug,    description,    eventDate,    cloudinaryFolderName,    coverImage,    youtubeVideoLinks,    publishedAt,    category->{      _id,      title,      slug,      description,      coverImage    }  }
+// Query: *[_type == "album" && (slug.current == $slug || _id == $slug)][0]{    _id,    title,    slug,    description,    eventDate,    cloudinaryFolderName,    coverImage,    youtubeVideoLinks,    publishedAt,    category->{      _id,      title,      slug,      description,      coverImage    }  }
 export type ALBUM_BY_SLUG_QUERY_RESULT = {
   _id: string;
   title: string | null;
   slug: Slug | null;
-  description: Array<{
-    children?: Array<{
-      marks?: Array<string>;
-      text?: string;
-      _type: "span";
-      _key: string;
-    }>;
-    style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
-    listItem?: "bullet" | "number";
-    markDefs?: Array<{
-      href?: string;
-      _type: "link";
-      _key: string;
-    }>;
-    level?: number;
-    _type: "block";
-    _key: string;
-  }> | null;
+  description: string | null;
   eventDate: string | null;
   cloudinaryFolderName: string | null;
   coverImage: string | null;
@@ -389,24 +355,7 @@ export type FEATURED_ALBUMS_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
   slug: Slug | null;
-  description: Array<{
-    children?: Array<{
-      marks?: Array<string>;
-      text?: string;
-      _type: "span";
-      _key: string;
-    }>;
-    style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
-    listItem?: "bullet" | "number";
-    markDefs?: Array<{
-      href?: string;
-      _type: "link";
-      _key: string;
-    }>;
-    level?: number;
-    _type: "block";
-    _key: string;
-  }> | null;
+  description: string | null;
   eventDate: string | null;
   cloudinaryFolderName: string | null;
   coverImage: string | null;
@@ -432,15 +381,69 @@ export type FEEDBACKS_QUERY_RESULT = Array<{
   publishedAt: string | null;
 }>;
 
+// Source: ../zivora/lib/sanity/queries.ts
+// Variable: WORKS_PAGE_ALBUMS_QUERY
+// Query: *[_type == "album" && defined(slug.current)] | order(publishedAt desc, _createdAt desc)[$start...$end]{    _id,    title,    slug,    description,    eventDate,    cloudinaryFolderName,    coverImage,    youtubeVideoLinks,    publishedAt,    category->{      _id,      title,      slug    }  }
+export type WORKS_PAGE_ALBUMS_QUERY_RESULT = Array<{
+  _id: string;
+  title: string | null;
+  slug: Slug | null;
+  description: string | null;
+  eventDate: string | null;
+  cloudinaryFolderName: string | null;
+  coverImage: string | null;
+  youtubeVideoLinks: Array<string> | null;
+  publishedAt: string | null;
+  category: {
+    _id: string;
+    title: string | null;
+    slug: Slug | null;
+  } | null;
+}>;
+
+// Source: ../zivora/lib/sanity/queries.ts
+// Variable: WORKS_TOTAL_COUNT_QUERY
+// Query: count(*[_type == "album" && defined(slug.current)])
+export type WORKS_TOTAL_COUNT_QUERY_RESULT = number;
+
+// Source: ../zivora/lib/sanity/queries.ts
+// Variable: WORKS_CATEGORY_ALBUMS_QUERY
+// Query: *[_type == "album" && defined(slug.current) && category->slug.current == $categorySlug] | order(publishedAt desc, _createdAt desc)[$start...$end]{    _id,    title,    slug,    description,    eventDate,    cloudinaryFolderName,    coverImage,    youtubeVideoLinks,    publishedAt,    category->{      _id,      title,      slug    }  }
+export type WORKS_CATEGORY_ALBUMS_QUERY_RESULT = Array<{
+  _id: string;
+  title: string | null;
+  slug: Slug | null;
+  description: string | null;
+  eventDate: string | null;
+  cloudinaryFolderName: string | null;
+  coverImage: string | null;
+  youtubeVideoLinks: Array<string> | null;
+  publishedAt: string | null;
+  category: {
+    _id: string;
+    title: string | null;
+    slug: Slug | null;
+  } | null;
+}>;
+
+// Source: ../zivora/lib/sanity/queries.ts
+// Variable: WORKS_CATEGORY_TOTAL_COUNT_QUERY
+// Query: count(*[_type == "album" && defined(slug.current) && category->slug.current == $categorySlug])
+export type WORKS_CATEGORY_TOTAL_COUNT_QUERY_RESULT = number;
+
 // Query TypeMap
 declare global {
   interface SanityQueries {
     '\n  *[_type == "album" && defined(slug.current)] | order(publishedAt desc, _createdAt desc){\n    _id,\n    title,\n    slug,\n    description,\n    eventDate,\n    cloudinaryFolderName,\n    coverImage,\n    youtubeVideoLinks,\n    publishedAt,\n    category->{\n      _id,\n      title,\n      slug\n    }\n  }\n': ALBUMS_QUERY_RESULT;
-    '\n  *[_type == "album" && slug.current == $slug][0]{\n    _id,\n    title,\n    slug,\n    description,\n    eventDate,\n    cloudinaryFolderName,\n    coverImage,\n    youtubeVideoLinks,\n    publishedAt,\n    category->{\n      _id,\n      title,\n      slug,\n      description,\n      coverImage\n    }\n  }\n': ALBUM_BY_SLUG_QUERY_RESULT;
+    '\n  *[_type == "album" && (slug.current == $slug || _id == $slug)][0]{\n    _id,\n    title,\n    slug,\n    description,\n    eventDate,\n    cloudinaryFolderName,\n    coverImage,\n    youtubeVideoLinks,\n    publishedAt,\n    category->{\n      _id,\n      title,\n      slug,\n      description,\n      coverImage\n    }\n  }\n': ALBUM_BY_SLUG_QUERY_RESULT;
     '\n  *[_type == "category" && defined(slug.current)] | order(publishedAt asc, _createdAt asc){\n    _id,\n    title,\n    slug,\n    description,\n    coverImage,\n    publishedAt\n  }\n': CATEGORIES_QUERY_RESULT;
     '\n  *[_type == "heroImages" && defined(slug.current)] | order(publishedAt asc, _createdAt asc)[0...6]{\n    _id,\n    title,\n    slug,\n    coverImage,\n    publishedAt\n  }\n': HERO_IMAGES_QUERY_RESULT;
     '\n  *[_type == "album" && defined(slug.current) && featured == true] | order(publishedAt desc, _createdAt desc){\n    _id,\n    title,\n    slug,\n    description,\n    eventDate,\n    cloudinaryFolderName,\n    coverImage,\n    youtubeVideoLinks,\n    featured,\n    publishedAt,\n    category->{\n      _id,\n      title,\n      slug\n    }\n  }\n': FEATURED_ALBUMS_QUERY_RESULT;
     '\n  *[_type == "feedback"] | order(publishedAt desc, _createdAt desc)[0...5]{\n    _id,\n    name,\n    tag,\n    feedback,\n    imageUrl,\n    publishedAt\n  }\n': FEEDBACKS_QUERY_RESULT;
+    '\n  *[_type == "album" && defined(slug.current)] | order(publishedAt desc, _createdAt desc)[$start...$end]{\n    _id,\n    title,\n    slug,\n    description,\n    eventDate,\n    cloudinaryFolderName,\n    coverImage,\n    youtubeVideoLinks,\n    publishedAt,\n    category->{\n      _id,\n      title,\n      slug\n    }\n  }\n': WORKS_PAGE_ALBUMS_QUERY_RESULT;
+    '\n  count(*[_type == "album" && defined(slug.current)])\n': WORKS_TOTAL_COUNT_QUERY_RESULT;
+    '\n  *[_type == "album" && defined(slug.current) && category->slug.current == $categorySlug] | order(publishedAt desc, _createdAt desc)[$start...$end]{\n    _id,\n    title,\n    slug,\n    description,\n    eventDate,\n    cloudinaryFolderName,\n    coverImage,\n    youtubeVideoLinks,\n    publishedAt,\n    category->{\n      _id,\n      title,\n      slug\n    }\n  }\n': WORKS_CATEGORY_ALBUMS_QUERY_RESULT;
+    '\n  count(*[_type == "album" && defined(slug.current) && category->slug.current == $categorySlug])\n': WORKS_CATEGORY_TOTAL_COUNT_QUERY_RESULT;
   }
 }
 // Lets @sanity/client releases that predate the global registry read it too
