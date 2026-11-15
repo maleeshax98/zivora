@@ -352,7 +352,7 @@ export type CATEGORIES_QUERY_RESULT = Array<{
 
 // Source: ../zivora/lib/sanity/queries.ts
 // Variable: HERO_IMAGES_QUERY
-// Query: *[_type == "heroImages" && defined(slug.current)] | order(publishedAt asc, _createdAt asc)[0...6]{    _id,    title,    slug,    coverImage,    publishedAt  }
+// Query: *[_type == "heroImages" && defined(slug.current)] | order(publishedAt desc, _createdAt desc)[0...6]{    _id,    title,    slug,    coverImage,    publishedAt  }
 export type HERO_IMAGES_QUERY_RESULT = Array<{
   _id: string;
   title: string | null;
@@ -526,7 +526,7 @@ declare global {
     '\n  *[_type == "album" && defined(slug.current)] | order(publishedAt desc, _createdAt desc){\n    _id,\n    title,\n    slug,\n    description,\n    eventDate,\n    cloudinaryFolderName,\n    coverImage,\n    youtubeVideoLinks,\n    publishedAt,\n    category->{\n      _id,\n      title,\n      slug\n    }\n  }\n': ALBUMS_QUERY_RESULT;
     '\n  *[_type == "album" && (slug.current == $slug || _id == $slug)][0]{\n    _id,\n    title,\n    slug,\n    description,\n    eventDate,\n    cloudinaryFolderName,\n    coverImage,\n    youtubeVideoLinks,\n    publishedAt,\n    category->{\n      _id,\n      title,\n      slug,\n      description,\n      coverImage\n    }\n  }\n': ALBUM_BY_SLUG_QUERY_RESULT;
     '\n  *[_type == "category" && defined(slug.current)] | order(publishedAt asc, _createdAt asc){\n    _id,\n    title,\n    slug,\n    description,\n    coverImage,\n    publishedAt\n  }\n': CATEGORIES_QUERY_RESULT;
-    '\n  *[_type == "heroImages" && defined(slug.current)] | order(publishedAt asc, _createdAt asc)[0...6]{\n    _id,\n    title,\n    slug,\n    coverImage,\n    publishedAt\n  }\n': HERO_IMAGES_QUERY_RESULT;
+    '\n  *[_type == "heroImages" && defined(slug.current)] | order(publishedAt desc, _createdAt desc)[0...6]{\n    _id,\n    title,\n    slug,\n    coverImage,\n    publishedAt\n  }\n': HERO_IMAGES_QUERY_RESULT;
     '\n  *[_type == "album" && defined(slug.current) && featured == true] | order(publishedAt desc, _createdAt desc){\n    _id,\n    title,\n    slug,\n    description,\n    eventDate,\n    cloudinaryFolderName,\n    coverImage,\n    youtubeVideoLinks,\n    featured,\n    publishedAt,\n    category->{\n      _id,\n      title,\n      slug\n    }\n  }\n': FEATURED_ALBUMS_QUERY_RESULT;
     '\n  *[_type == "feedback"] | order(publishedAt desc, _createdAt desc)[0...5]{\n    _id,\n    name,\n    tag,\n    feedback,\n    imageUrl,\n    publishedAt\n  }\n': FEEDBACKS_QUERY_RESULT;
     '\n  *[_type == "album" && defined(slug.current)] | order(publishedAt desc, _createdAt desc)[$start...$end]{\n    _id,\n    title,\n    slug,\n    description,\n    eventDate,\n    cloudinaryFolderName,\n    coverImage,\n    youtubeVideoLinks,\n    publishedAt,\n    category->{\n      _id,\n      title,\n      slug\n    }\n  }\n': WORKS_PAGE_ALBUMS_QUERY_RESULT;

@@ -3,8 +3,6 @@
 import React, {
   useEffect,
   useRef,
-  useState,
-  useCallback,
   useMemo,
 } from "react";
 import { cn } from "@/lib/utils";
@@ -75,84 +73,14 @@ export function HeroSection({
   // Split title into individual letter characters
   const letters = useMemo(() => title.split(""), [title]);
 
-  // Active items from props
+  // Active items from props (capped at 6 items matching Sanity query limit)
   const activeItems = useMemo(() => {
     return items ?? [];
   }, [items]);
 
-  // Responsive card dimension states
-  const [metrics, setMetrics] = useState<{
-    cardWidth: number;
-    gap: number;
-    visibleCount: number;
-  }>({
-    cardWidth: 220,
-    gap: 20,
-    visibleCount: 4, // SSR default
-  });
-
-  // Calculate dynamic image count and dimensions based on viewport & container width
-  const updateLayoutMetrics = useCallback(() => {
-    if (typeof window === "undefined") return;
-
-    const windowWidth = window.innerWidth;
-    const isMobile = windowWidth < 768;
-    const isTablet = windowWidth >= 768 && windowWidth < 1024;
-
-    const cardWidth = isMobile ? 140 : isTablet ? 190 : 230;
-    const gap = isMobile ? 12 : isTablet ? 16 : 20;
-
-    // Measure available container width or compute from window margins
-    const container = imageRowRef.current || imageLineContainerRef.current;
-    const availableWidth = container
-      ? container.clientWidth
-      : isMobile
-        ? windowWidth - 32
-        : isTablet
-          ? windowWidth - 64
-          : windowWidth - 128;
-
-    // Dynamically calculate exact number of full images that fit the available width (capped at 6)
-    const exactFit =
-      activeItems.length > 0
-        ? Math.max(
-            1,
-            Math.min(
-              6,
-              activeItems.length,
-              Math.floor((availableWidth + gap) / (cardWidth + gap)),
-            ),
-          )
-        : 0;
-
-    setMetrics({
-      cardWidth,
-      gap,
-      visibleCount: exactFit,
-    });
-  }, [activeItems.length]);
-
-  // Handle ResizeObserver and window resize
-  useEffect(() => {
-    updateLayoutMetrics();
-
-    let resizeObserver: ResizeObserver | null = null;
-    const rowEl = imageRowRef.current || imageLineContainerRef.current;
-
-    if (typeof ResizeObserver !== "undefined" && rowEl) {
-      resizeObserver = new ResizeObserver(() => {
-        updateLayoutMetrics();
-      });
-      resizeObserver.observe(rowEl);
-    }
-
-    window.addEventListener("resize", updateLayoutMetrics, { passive: true });
-
-    return () => {
-      resizeObserver?.disconnect();
-      window.removeEventListener("resize", updateLayoutMetrics);
-    };
-  }, [updateLayoutMetrics]);
+  const displayedItems = useMemo(() => {
+    return activeItems.slice(0, 6);
+  }, [activeItems]);
 
   // Orchestrate Master GSAP Sequential Timeline
   useEffect(() => {
@@ -266,20 +194,7 @@ export function HeroSection({
     }, section);
 
     return () => ctx.revert();
-  }, [letters.length, metrics.visibleCount, activeItems]);
-
-  // Display items:
-  // On desktop/tablet, slice to the exact calculated count fitting the viewport (capped at 6).
-  // On mobile (< 768px), allow up to 4 items in a touch-friendly horizontal scroll track
-  // to prevent overflow while giving mobile users fluid swipe access.
-  const isMobileViewport =
-    typeof window !== "undefined" ? window.innerWidth < 768 : false;
-  const displayedItems = activeItems.slice(
-    0,
-    isMobileViewport
-      ? Math.min(activeItems.length, 4)
-      : Math.min(6, metrics.visibleCount),
-  );
+  }, [letters.length, displayedItems]);
 
   return (
     <section
@@ -289,7 +204,7 @@ export function HeroSection({
         "relative flex min-h-[100dvh] w-full flex-col justify-center md:justify-between overflow-hidden bg-background text-foreground select-none",
         "pt-24 sm:pt-28 md:pt-32 lg:pt-36",
         "pb-10 sm:pb-12 md:pb-14",
-        "px-6 sm:px-10 lg:px-16 xl:px-20",
+        "px-4 sm:px-8 md:px-10 lg:px-16 xl:px-20",
         className,
       )}
     >
@@ -357,14 +272,10 @@ export function HeroSection({
         <div
           ref={imageRowRef}
           className={cn(
-            "flex w-full items-center",
-            // Mobile: centered or horizontally scrollable if overflowing
-            "justify-center",
-            "overflow-x-auto no-scrollbar touch-pan-x py-2 -mx-2 px-2",
+            "flex w-full max-w-full items-center justify-center",
+            "gap-1.5 sm:gap-2.5 md:gap-3.5 lg:gap-4 xl:gap-5",
+            "overflow-hidden py-2",
           )}
-          style={{
-            gap: `${metrics.gap}px`,
-          }}
         >
           {displayedItems.map((item, idx) => (
             <div
@@ -373,9 +284,8 @@ export function HeroSection({
                 imageItemRefs.current[idx] = el;
               }}
               data-cursor="expand"
-              className="group relative shrink-0 overflow-hidden rounded-none border border-surface-border/70 bg-surface-subtle shadow-sm transition-all duration-300 hover:border-brand/70"
+              className="group relative flex-1 min-w-0 max-w-[240px] overflow-hidden rounded-none border border-surface-border/70 bg-surface-subtle shadow-sm transition-all duration-300 hover:border-brand/70"
               style={{
-                width: `${metrics.cardWidth}px`,
                 aspectRatio: item.aspectRatio || "3 / 4",
               }}
             >
@@ -385,25 +295,25 @@ export function HeroSection({
                 aspectRatio={item.aspectRatio || "3 / 4"}
                 width={460}
                 height={613}
-                sizes="(max-width: 640px) 140px, (max-width: 1024px) 190px, 230px"
+                sizes="(max-width: 640px) 16vw, (max-width: 1024px) 16vw, 240px"
                 config={{
                   cloud: {
                     cloudName: resolveCloudName(item.src),
                   },
                 }}
-                wrapperClassName="rounded-none"
+                wrapperClassName="rounded-none w-full h-full"
                 className="h-full w-full object-cover rounded-none transition-transform duration-700 ease-out group-hover:scale-105"
               />
 
               {/* Subtle Editorial Gradient & Caption on Hover */}
-              <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-background/95 via-background/30 to-transparent p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 rounded-none">
+              <div className="pointer-events-none absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-background/95 via-background/30 to-transparent p-1.5 sm:p-2.5 md:p-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100 rounded-none">
                 {item.title && (
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-copy-primary font-medium">
+                  <span className="font-mono text-[8px] sm:text-[9px] md:text-[10px] uppercase tracking-wider text-copy-primary font-medium truncate">
                     {item.title}
                   </span>
                 )}
                 {item.category && (
-                  <span className="font-mono text-[9px] uppercase tracking-wider text-copy-secondary">
+                  <span className="hidden sm:inline-block font-mono text-[8px] md:text-[9px] uppercase tracking-wider text-copy-secondary truncate">
                     {item.category}
                   </span>
                 )}

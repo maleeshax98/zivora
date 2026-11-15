@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import { HeroSection, type HeroImageItem } from "@/components/hero/HeroSection";
 import { CinematicText } from "@/components/sections/CinematicText";
 import {
@@ -53,11 +52,6 @@ async function getHeroImages(): Promise<HeroImageItem[]> {
   return [];
 }
 
-async function HeroSectionAsync() {
-  const heroItems = await getHeroImages();
-  return <HeroSection items={heroItems} />;
-}
-
 async function getFeaturedWorks(): Promise<FeaturedProjectItem[]> {
   "use cache";
   try {
@@ -90,11 +84,6 @@ async function getFeaturedWorks(): Promise<FeaturedProjectItem[]> {
     );
   }
   return [];
-}
-
-async function FeaturedWorkAsync() {
-  const featuredWorks = await getFeaturedWorks();
-  return <FeaturedWork items={featuredWorks} />;
 }
 
 function extractPlainTextFromPortableText(blocks: unknown): string {
@@ -141,11 +130,6 @@ async function getCategories(): Promise<ServiceItem[]> {
   return [];
 }
 
-async function ServicesSectionAsync() {
-  const categories = await getCategories();
-  return <ServicesSection services={categories} />;
-}
-
 async function getSampleGallery(): Promise<SampleGalleryItem[]> {
   "use cache";
   try {
@@ -158,11 +142,6 @@ async function getSampleGallery(): Promise<SampleGalleryItem[]> {
     );
   }
   return [];
-}
-
-async function SampleGalleryAsync() {
-  const galleryItems = await getSampleGallery();
-  return <SampleGallery items={galleryItems} />;
 }
 
 async function getFeedbacks(): Promise<FeedbackCardItem[]> {
@@ -193,39 +172,33 @@ async function getFeedbacks(): Promise<FeedbackCardItem[]> {
   return [];
 }
 
-async function UserFeedbackAsync() {
-  const feedbacks = await getFeedbacks();
-  return <UserFeedback cards={feedbacks} />;
-}
+export default async function Home() {
+  const [
+    heroItems,
+    featuredWorks,
+    categories,
+    sampleGalleryItems,
+    feedbacks,
+  ] = await Promise.all([
+    getHeroImages(),
+    getFeaturedWorks(),
+    getCategories(),
+    getSampleGallery(),
+    getFeedbacks(),
+  ]);
 
-export default function Home() {
   return (
     <div className="relative min-h-screen flex flex-col bg-background text-foreground">
       {/* Custom Trailing Mouse Cursor */}
       <CustomCursor />
-      <Suspense fallback={<HeroSection />}>
-        <HeroSectionAsync />
-      </Suspense>
+      <HeroSection items={heroItems} />
       <AboutSection />
       <CinematicText />
-      <Suspense fallback={<FeaturedWork />}>
-        <FeaturedWorkAsync />
-      </Suspense>
-
+      <FeaturedWork items={featuredWorks} />
       <ConsistencyBreakText />
-
-      <Suspense fallback={<ServicesSection />}>
-        <ServicesSectionAsync />
-      </Suspense>
-
-      <Suspense fallback={<SampleGallery />}>
-        <SampleGalleryAsync />
-      </Suspense>
-
-      <Suspense fallback={<UserFeedback />}>
-        <UserFeedbackAsync />
-      </Suspense>
-
+      <ServicesSection services={categories} />
+      <SampleGallery items={sampleGalleryItems} />
+      <UserFeedback cards={feedbacks} />
       <ContactSection />
       <FooterSection />
     </div>

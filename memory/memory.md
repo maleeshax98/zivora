@@ -1862,11 +1862,66 @@
 - Contact form now features warm human microcopy and hides all internal developer errors from the UI.
 - Awaiting user direction for the next task or feature specification.
 
+## Session: 2026-11-15 — Bugfix: Resolved React Runtime NotFoundError (insertBefore) in Home Route
 
+### 1. Session Summary
 
+- Diagnosed and resolved the `Runtime NotFoundError: Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node` occurring at `HeroSectionAsync (app/page.tsx:58:10)` and `Home (app/page.tsx:207:9)` on Next.js 16.4.5 (Turbopack).
+- Root Cause:
+  - `app/page.tsx` had fragmented individual sections into `<Suspense fallback={<HeroSection />}> <HeroSectionAsync /> </Suspense>`.
+  - While `HeroSectionAsync` was streaming, the initial HTML was rendered with the fallback `<HeroSection />` and its immediate sibling `<AboutSection />`.
+  - On client mount, `<AboutSection />` initialized GSAP `ScrollTrigger` with `pin: true`. GSAP reparented the `<section>` element of `<AboutSection />` into a `.pin-spacer` DOM element.
+  - When `HeroSectionAsync` resolved its stream, React tried to insert the resolved `<HeroSection />` before its next sibling (`aboutSectionNode`) in the parent container via `parent.insertBefore(newHeroSection, aboutSectionNode)`. Because `aboutSectionNode.parentNode` was now `.pin-spacer` rather than `parent`, the browser DOM threw `NotFoundError`.
+- Architectural Resolution:
+  - Converted `Home` in `zivora/app/page.tsx` to `export default async function Home()`, concurrently awaiting all cached queries (`getHeroImages`, `getFeaturedWorks`, `getCategories`, `getSampleGallery`, `getFeedbacks`) via `Promise.all`.
+  - Removed per-section `<Suspense>` wrappers, eliminating asynchronous sibling DOM insertions while preserving static route generation (`○ /`) and Next.js 16 `"use cache"` benefits.
+  - Refactored `zivora/components/hero/HeroSection.tsx`: replaced runtime window-measuring JavaScript / `ResizeObserver` / `metrics` state with responsive Tailwind classes (`w-[140px] sm:w-[170px] md:w-[190px] lg:w-[220px] xl:w-[230px]`, `gap-3 sm:gap-4 md:gap-5`), preventing hydration mismatches and multiple timeline re-runs.
+  - Refactored `zivora/components/ui/CustomCursor.tsx`: rendered static outer container and initially hidden (`opacity-0`) dot/ring markup on both server and client, eliminating dynamic client DOM insertion during hydration.
+  - Hardened `zivora/app/layout.tsx`: added `notranslate` and `translate="no"` to root `<html>` tag to prevent translation browser extensions from mutating text nodes.
+- Verification:
+  - `pnpm tsc --noEmit` passed with 0 errors.
+  - `pnpm lint` passed with 0 errors and 0 warnings.
+  - `pnpm build` (`next build --webpack`) passed with 100% clean static prerendering (`○ /`).## Session: 2026-11-15 — Feature: HeroImages Newest 6 Fetch & Fluid Responsive Fit (No Horizontal Scrollbar)
 
+### 1. Session Summary
 
+- Addressed user request: "lets fetch newest 6 images from HeroImages and then show them. but no horizontal scrollbar for the section. adjust the images size for every screen size".
+- Updated `HERO_IMAGES_QUERY` in `lib/sanity/queries.ts`:
+  - Changed ordering from `order(publishedAt asc, _createdAt asc)[0...6]` to `order(publishedAt desc, _createdAt desc)[0...6]` to retrieve the newest 6 published images from Sanity Content Lake.
+  - Re-ran Sanity Typegen (`pnpm run typegen`) in `studio` to regenerate `zivora/sanity.types.ts`.
+- Refactored `zivora/components/hero/HeroSection.tsx`:
+  - Eliminated horizontal scroll container classes (`overflow-x-auto`, `no-scrollbar`, `touch-pan-x`, `-mx-2`, `px-2`).
+  - Added strict `overflow-hidden` to both the image line container and the section to prevent any horizontal overflow on any device.
+  - Implemented fluid responsive card sizing using `flex-1 min-w-0 max-w-[240px]` with responsive gap scaling (`gap-1.5 sm:gap-2.5 md:gap-3.5 lg:gap-4 xl:gap-5`) and section padding (`px-4 sm:px-8 md:px-10 lg:px-16 xl:px-20`).
+  - Adjusted CldImageWrapper responsive sizes attribute (`(max-width: 640px) 16vw, (max-width: 1024px) 16vw, 240px`) and refined hover caption typography (`text-[8px] sm:text-[9px] md:text-[10px] truncate`).
+  - All 6 images seamlessly scale to fit mobile (320px+), tablet, laptop, and desktop viewports with 0 horizontal scrollbars.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`next build --webpack`).
+- Updated `context/progress-tracker.md`.
 
+### 2. Architectural & Engineering Decisions
+
+- **GROQ Ordering for Recency**: `publishedAt desc, _createdAt desc` guarantees that the most recently published editorial assets are fetched first, capped at 6 documents by `[0...6]`.
+- **CSS Flex Fluidity vs. Fixed Pixel Widths**: Fixed widths (e.g. `w-[140px] ... w-[230px]`) combined with `shrink-0` inevitably cause container overflow when 6 items are present on small/medium viewports. By using `flex-1 min-w-0 max-w-[240px]` inside a `justify-center` flex container:
+  - Small mobile viewports (320px–430px) fluidly compress each card down to ~45–60px wide while preserving the 3:4 aspect ratio.
+  - Tablet and laptop viewports smoothly scale each card from ~100px to ~170px.
+  - Desktop viewports scale up to 240px max width and remain gracefully centered.
+  - Zero JavaScript measuring or window listeners are required, preventing hydration flash, layout shift, or GSAP timeline re-triggers.
+
+### 3. Implementation State
+
+- `zivora/lib/sanity/queries.ts`: Updated `HERO_IMAGES_QUERY` with `publishedAt desc, _createdAt desc`.
+- `zivora/sanity.types.ts`: Synchronized via Sanity typegen.
+- `zivora/components/hero/HeroSection.tsx`: Updated with fluid responsive flex cards and zero horizontal scroll.
+- `zivora/context/progress-tracker.md`: Updated to completed.
+- Verification:
+  - `pnpm -C zivora exec tsc --noEmit` (0 errors)
+  - `pnpm -C zivora run lint` (0 errors, 0 warnings)
+  - `pnpm -C zivora run build` (`next build --webpack` passed, 0 errors, static route `○ /` generated)
+
+### 4. Continuation Context & Next Steps
+
+- Hero Section now fetches the newest 6 hero images from Sanity Content Lake and displays them in a fluid responsive line with zero horizontal scrollbars across all screen sizes.
+- Awaiting user review and next instructions.
 
 
 

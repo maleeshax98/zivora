@@ -52,7 +52,7 @@ export const CATEGORIES_QUERY = defineQuery(`
 `)
 
 export const HERO_IMAGES_QUERY = defineQuery(`
-  *[_type == "heroImages" && defined(slug.current)] | order(publishedAt asc, _createdAt asc)[0...6]{
+  *[_type == "heroImages" && defined(slug.current)] | order(publishedAt desc, _createdAt desc)[0...6]{
     _id,
     title,
     slug,

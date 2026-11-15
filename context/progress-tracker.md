@@ -8,9 +8,28 @@ Phase 2: CMS Integration & Content Modeling
 
 ## Current Goal
 
-Backend Task 06: Contact Schema & Form Submission to Sanity (`context/backend/06-contact.md`) completed. Awaiting user review and next feature specification.
+Completed: Fetch newest 6 images from HeroImages and show them with fluid responsive sizing and no horizontal scrollbar across all screen sizes. Awaiting user review.
 
 ## Completed
+
+- Feature: HeroImages Newest 6 Fetch & Fluid Responsive Fit (No Horizontal Scrollbar):
+  - Updated `HERO_IMAGES_QUERY` in `lib/sanity/queries.ts`: ordered by `publishedAt desc, _createdAt desc` with `[0...6]` limit to fetch the newest 6 hero image documents from Sanity Content Lake.
+  - Re-ran Sanity Typegen (`pnpm run typegen`) to synchronize `sanity.types.ts`.
+  - Refactored `HeroSection.tsx`:
+    - Eliminated horizontal scroll container (`overflow-x-auto`, `no-scrollbar`, `touch-pan-x`, `-mx-2`, `px-2`).
+    - Added `overflow-hidden` to the image line container to eliminate any risk of horizontal overflow.
+    - Implemented fluid responsive card sizing using `flex-1 min-w-0 max-w-[240px]` with responsive gaps (`gap-1.5 sm:gap-2.5 md:gap-3.5 lg:gap-4 xl:gap-5`) and section padding (`px-4 sm:px-8 md:px-10 lg:px-16 xl:px-20`).
+    - Adjusted CldImageWrapper responsive sizes attribute (`(max-width: 640px) 16vw, (max-width: 1024px) 16vw, 240px`) and refined hover caption typography (`text-[8px] sm:text-[9px] md:text-[10px] truncate`).
+    - All 6 images seamlessly scale to fit mobile (320px+), tablet, laptop, and desktop viewports with 0 horizontal scrollbars.
+  - Verified compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`next build --webpack`).
+
+- Bugfix: React Runtime NotFoundError (`Failed to execute 'insertBefore' on 'Node'`):
+  - Diagnosed exact root cause: Next.js streaming `<Suspense>` boundaries in `app/page.tsx` were asynchronously resolving and attempting to insert replacement DOM nodes before subsequent siblings (`<AboutSection />`). However, `<AboutSection />` had already initialized GSAP `ScrollTrigger` with `pin: true`, causing GSAP to reparent `<AboutSection>`'s `<section>` inside a dynamic `<div class="pin-spacer">`. When React executed `parent.insertBefore(newHeroSection, aboutSectionNode)`, the browser threw `NotFoundError` because `aboutSectionNode.parentNode` was the `.pin-spacer` rather than `Home`'s root container.
+  - Refactored `app/page.tsx`: converted `Home` to an `export default async function Home()`, concurrently fetching all `"use cache"` data loaders (`getHeroImages`, `getFeaturedWorks`, `getCategories`, `getSampleGallery`, `getFeedbacks`) via `Promise.all` in a single server pass, completely eliminating redundant per-section `<Suspense>` streaming boundaries and the subsequent `insertBefore` sibling insertion race conditions.
+  - Refactored `HeroSection.tsx`: eliminated JS-based window dimensions and `ResizeObserver` re-renders in favor of responsive CSS utility classes (`w-[140px] sm:w-[170px] md:w-[190px] lg:w-[220px] xl:w-[230px]`, `gap-3 sm:gap-4 md:gap-5`), preventing hydration mismatches and multi-run GSAP master entrance animation re-triggers.
+  - Refactored `CustomCursor.tsx`: eliminated client-only dynamic DOM insertion by rendering static outer container and hidden dot/ring elements (`opacity-0`) on both server and client, ensuring 100% hydration consistency.
+  - Hardened `app/layout.tsx`: added `translate="no"` and `notranslate` to root `<html>` element to prevent third-party translation extensions from mutating text nodes during hydration.
+  - Verified static compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`next build --webpack`), confirming static route generation (`○ /`).
 
 - Backend Task 06: Contact Schema & Form Submission to Sanity (`context/backend/06-contact.md`):
   - Created `contact` document schema in `studio/schemaTypes/contact.ts` with fields: `name` (required string), `email` (required email string), `scope` (text for brief scope/timeline), and `submittedAt` (datetime initialized to ISO string) with preview selector (name, email, formatted date)
