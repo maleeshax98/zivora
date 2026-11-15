@@ -1700,6 +1700,83 @@
 - Packages page `/packages` is fully implemented and operational with live Sanity Content Lake connectivity.
 - Awaiting user direction for the next task or feature specification.
 
+## Session: 2026-11-15 — Feature Spec 16: Dedicated Contact Page (01-initial.md)
+
+### 1. Session Summary
+
+- Read `zivora/context/feature-specs/contact/01-initial.md` and marked Feature Spec 16 as in-progress in `zivora/context/progress-tracker.md`.
+- Implemented the dedicated Contact Page per specification:
+  - Created dedicated route `app/contact/page.tsx` mounting `<ContactSection />` and `<FooterSection />` with metadata.
+  - References the file named "ZIVORA" verbatim to align with the broader project architecture.
+  - Updated `components/sections/ContactSection.tsx` (`"use client"`):
+    - Added direct contact and WhatsApp number (**+94 77 051 2373**) prominently displayed directly below the massive fluid headline using secondary muted typography tokens and a functional `wa.me` link (`https://wa.me/94770512373`).
+    - Integrated GSAP `ScrollTrigger` entrance animation with `gsap.matchMedia()` revealing the massive headline, the phone number, and the bottom-right form block with subtle vertical translation, plus static fallback for `prefers-reduced-motion: reduce`.
+    - Preserved full-viewport layout (`min-h-[100dvh]`) leveraging the whitespace design principle with massive fluid typography centered in the viewport (`clamp(3.5rem, 14vw, 17.5rem)`).
+    - Preserved minimal borderless form styling with bottom borders only, text-based submit button (`SEND INQUIRY ->`), and mobile fluid collapse into a vertically stacked center-aligned layout.
+    - Cleaned up submission confirmation state to eliminate artificial robotic symbols and bracketed fillers (`INQUIRY RECEIVED` and `Send Another Message`) for an authentic, human editorial feel.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`) confirming static route generation (`○ /contact`), and Sanity Studio build (`sanity build`).
+- Updated `zivora/context/progress-tracker.md` to completed.
+
+### 2. Architectural & Engineering Decisions
+
+- **Direct Export & Component Reusability**: Maintained direct named and default exports from `components/sections/ContactSection.tsx` with zero barrel files. Configured `ContactSectionProps` with customizable `directContactNumber` and `whatsAppHref` defaulting to `+94 77 051 2373` and `https://wa.me/94770512373`, allowing seamless integration on both `/contact` and `/`.
+- **Three-Target GSAP Choreography**: Structured entrance timeline to stagger headline (`fromTo y: 44, scale: 0.98`), phone number (`fromTo y: 22`), and bottom-right form (`fromTo y: 28`), gracefully clearing props on completion.
+- **Elimination of Artificial "AI Look"**: Adhered strictly to the guideline to avoid cluttered filler text and robotic sci-fi styling (no `//`, no brackets `[...]`), maintaining pure editorial minimalism.
+
+### 3. Implementation State
+
+- `zivora/components/sections/ContactSection.tsx`: Updated with direct contact / WhatsApp link, GSAP entrance animation for phone element, and cleaned confirmation state.
+- `zivora/app/contact/page.tsx`: Created dedicated route with metadata, `<ContactSection />`, and `<FooterSection />`.
+- `zivora/context/progress-tracker.md`: Updated to completed.
+- Verification:
+  - `pnpm -C zivora exec tsc --noEmit` (0 errors)
+  - `pnpm -C zivora run lint` (0 errors, 0 warnings)
+  - `pnpm -C zivora run build` (`next build --webpack` passed, 0 errors, static route `○ /contact` generated)
+  - `pnpm -C studio run build` (`sanity build` passed, 0 errors)
+
+### 4. Continuation Context & Next Steps
+
+- Dedicated Contact page `/contact` is now live and functional, accessible via Navbar `/contact` link and mobile menu.
+- Awaiting user direction for the next task or feature specification.
+
+## Session: 2026-11-15 — Feature Spec 16 Refinement: Centered Contact Form & Linked Social Media Icons
+
+### 1. Session Summary
+
+- Addressed user feedback for Feature Spec 16 (`zivora/context/feature-specs/contact/01-initial.md`):
+  - Centered the minimal contact form horizontally within the layout, positioned below the massive typography and direct contact info.
+  - Retained plain text inputs with subtle bottom borders only (no box borders) and the `SEND INQUIRY ->` text-based submit button.
+  - Integrated linked social media icons using the project's icon library (`lucide-react` / stroke-based icons: Instagram, YouTube, WhatsApp via `MessageCircle`, Email via `Mail`), arranged in a balanced row directly below the centered form.
+- Updated `components/sections/ContactSection.tsx` (`"use client"`):
+  - Changed form container from right-anchored layout to horizontally centered layout (`max-w-lg lg:max-w-xl mx-auto`).
+  - Added `socialLinks` prop with `DEFAULT_SOCIAL_LINKS` (Instagram, YouTube, WhatsApp, Email).
+  - Integrated `socialsRef` in the GSAP `ScrollTrigger` timeline, animating entrance with subtle translation and fade (staggered after formContainer), with static fallback for `prefers-reduced-motion: reduce`.
+- Updated `zivora/app/contact/page.tsx` JSDoc to reflect the centered form and social media icons.
+- Updated `zivora/context/feature-specs/contact/01-initial.md` and `zivora/context/progress-tracker.md` to completed.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and Sanity Studio build (`sanity build`).
+
+### 2. Architectural & Engineering Decisions
+
+- **Social Media Icons & Icon Library Compatibility**: Because `lucide-react` v1.x deprecated commercial brand icons, we imported official generic icons (`MessageCircle` for WhatsApp, `Mail` for Email) directly from `lucide-react`, and defined `InstagramIcon` and `YoutubeIcon` using Lucide's exact 24x24 stroke specifications (`stroke="currentColor"`, `strokeWidth={1.5}`, `fill="none"`, `strokeLinecap="round"`, `strokeLinejoin="round"`), guaranteeing visual consistency and type-safety.
+- **Center-Aligned Vertical Rhythm**: Moving from an asymmetrical bottom-right anchor to a horizontally centered form below the headline creates a unified, cinematic vertical eye flow (Headline -> Direct Phone/WhatsApp -> Centered Minimal Form -> Social Icons).
+- **Four-Phase GSAP Entrance**: Headline (`y: 44, scale: 0.98`) -> Phone (`y: 22`) -> Centered Form (`y: 28`) -> Social Icons (`y: 16`), all clearing props on completion.
+
+### 3. Implementation State
+
+- `zivora/components/sections/ContactSection.tsx`: Updated with horizontally centered form container, linked social media icons, and GSAP timeline entrance.
+- `zivora/context/feature-specs/contact/01-initial.md`: Updated specification.
+- `zivora/context/progress-tracker.md`: Updated to completed.
+- Verification:
+  - `pnpm -C zivora exec tsc --noEmit` (0 errors)
+  - `pnpm -C zivora run lint` (0 errors, 0 warnings)
+  - `pnpm -C zivora run build` (`next build --webpack` passed, 0 errors, static route `○ /contact` generated)
+  - `pnpm -C studio run build` (`sanity build` passed, 0 errors)
+
+### 4. Continuation Context & Next Steps
+
+- Dedicated Contact page `/contact` now features the massive fluid headline, direct contact phone number, horizontally centered minimal form, and linked social media icons.
+- Awaiting user direction for the next task or feature specification.
+
 
 
 

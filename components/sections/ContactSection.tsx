@@ -4,23 +4,18 @@
 /**
  * ContactSection for ZIVORA — Creative Minimal Contact Redesign.
  *
- * Implements a dramatic, whitespace-driven finale utilizing massive typography
- * centered in the viewport and a directly embedded, asymmetrical minimal contact form
- * anchored to the bottom-right corner.
- *
- * Key Capabilities:
+ * Implements an expansive, whitespace-driven editorial contact layout featuring:
  * 1. Expansive Whitespace: Full-viewport container (`min-h-[100dvh]`) creating a clean,
  *    uncluttered editorial atmosphere.
  * 2. Absolute Visual Center: Massive fluid typography call-to-action ("LET'S TALK.")
  *    dominating the visual center of the section.
- * 3. Asymmetrical Form Anchor: Minimal, borderless contact form positioned directly below
- *    the central typography and anchored to the bottom-right corner.
- * 4. Minimal Form Styling: Plain text inputs with subtle bottom hairline borders only (no box borders),
- *    secondary muted typography tokens, and a clean text-based submit button (`SEND INQUIRY ->`).
- * 5. Strict Removals: Completely eliminates bottom-left social links, hover-reveal cursor
- *    physics, and secondary header/footer bars.
- * 6. Responsive Fluidity: Collapses into a centered, vertically stacked layout on mobile
- *    viewports with touch-friendly spacing.
+ * 3. Direct Contact Info: Prominently displayed WhatsApp and direct phone (+94 77 051 2373)
+ *    positioned beneath the central headline with secondary muted tokens and wa.me integration.
+ * 4. Centered Minimal Form: Minimal, borderless contact form horizontally centered within
+ *    the layout with plain text inputs, subtle bottom hairline borders, and `SEND INQUIRY ->` action.
+ * 5. Linked Social Media Icons: Elegantly integrated stroke-based icons (Instagram, YouTube,
+ *    WhatsApp, Email) positioned directly below the centered form.
+ * 6. Responsive Fluidity: Collapses fluidly into a clean, center-aligned vertical stack on mobile.
  * 7. Purposeful Motion (GSAP): Subtle, staggered ScrollTrigger entrance animation with
  *    accessible fallback for `prefers-reduced-motion: reduce`.
  * 8. Dual-Theme Support: Adheres to Warm Light (`#EAE6DF`) and Cinematic Dark (`#20211F`) tokens
@@ -30,13 +25,101 @@
  */
 
 import React, { useEffect, useRef, useState } from "react";
+import { MessageCircle, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { gsap, prefersReducedMotion } from "@/lib/gsap";
+
+export interface SocialLinkItem {
+  label: string;
+  href: string;
+  icon: "instagram" | "youtube" | "whatsapp" | "mail";
+}
+
+const DEFAULT_SOCIAL_LINKS: SocialLinkItem[] = [
+  {
+    label: "Instagram",
+    href: "https://instagram.com",
+    icon: "instagram",
+  },
+  {
+    label: "YouTube",
+    href: "https://youtube.com",
+    icon: "youtube",
+  },
+  {
+    label: "WhatsApp",
+    href: "https://wa.me/94770512373",
+    icon: "whatsapp",
+  },
+  {
+    label: "Email",
+    href: "mailto:hello@zivora.com",
+    icon: "mail",
+  },
+];
+
+// Stroke-based icons adhering to project's lucide-react design geometry
+function InstagramIcon({ className = "w-4 h-4", ...props }: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+    </svg>
+  );
+}
+
+function YoutubeIcon({ className = "w-4 h-4", ...props }: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17" />
+      <path d="m10 15 5-3-5-3z" />
+    </svg>
+  );
+}
+
+function renderSocialIcon(icon: SocialLinkItem["icon"]) {
+  switch (icon) {
+    case "instagram":
+      return <InstagramIcon className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />;
+    case "youtube":
+      return <YoutubeIcon className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />;
+    case "whatsapp":
+      return <MessageCircle className="w-4 h-4 sm:w-[18px] sm:h-[18px]" strokeWidth={1.5} />;
+    case "mail":
+      return <Mail className="w-4 h-4 sm:w-[18px] sm:h-[18px]" strokeWidth={1.5} />;
+    default:
+      return null;
+  }
+}
 
 export interface ContactSectionProps {
   headlineLine1?: string;
   headlineLine2?: string;
   italicizeLine2?: boolean;
+  directContactNumber?: string;
+  whatsAppHref?: string;
+  socialLinks?: SocialLinkItem[];
   className?: string;
 }
 
@@ -44,11 +127,16 @@ export function ContactSection({
   headlineLine1 = "LET'S",
   headlineLine2 = "TALK.",
   italicizeLine2 = true,
+  directContactNumber = "+94 77 051 2373",
+  whatsAppHref = "https://wa.me/94770512373",
+  socialLinks = DEFAULT_SOCIAL_LINKS,
   className,
 }: ContactSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const headlineRef = useRef<HTMLDivElement>(null);
+  const phoneRef = useRef<HTMLDivElement>(null);
   const formContainerRef = useRef<HTMLDivElement>(null);
+  const socialsRef = useRef<HTMLDivElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   // Form interactive state
@@ -85,7 +173,9 @@ export function ContactSection({
   useEffect(() => {
     const section = sectionRef.current;
     const headline = headlineRef.current;
+    const phone = phoneRef.current;
     const formContainer = formContainerRef.current;
+    const socials = socialsRef.current;
 
     if (!section || !headline || !formContainer) return;
 
@@ -102,8 +192,12 @@ export function ContactSection({
           isMotionSafe: boolean;
         };
 
+        const animTargets = [headline, phone, formContainer, socials].filter(
+          Boolean
+        ) as HTMLElement[];
+
         if (reduced || prefersReducedMotion()) {
-          gsap.set([headline, formContainer], {
+          gsap.set(animTargets, {
             opacity: 1,
             y: 0,
             clearProps: "all",
@@ -130,7 +224,24 @@ export function ContactSection({
             ease: "power3.out",
             clearProps: "transform",
           }
-        ).fromTo(
+        );
+
+        if (phone) {
+          tl.fromTo(
+            phone,
+            { opacity: 0, y: 22 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.8,
+              ease: "power2.out",
+              clearProps: "transform",
+            },
+            "-=0.6"
+          );
+        }
+
+        tl.fromTo(
           formContainer,
           { opacity: 0, y: 28 },
           {
@@ -142,6 +253,21 @@ export function ContactSection({
           },
           "-=0.5"
         );
+
+        if (socials) {
+          tl.fromTo(
+            socials,
+            { opacity: 0, y: 16 },
+            {
+              opacity: 1,
+              y: 0,
+              duration: 0.8,
+              ease: "power2.out",
+              clearProps: "transform",
+            },
+            "-=0.5"
+          );
+        }
       }
     );
 
@@ -190,14 +316,38 @@ export function ContactSection({
             {headlineLine2}
           </span>
         </h2>
+
+        {/* Direct Contact Info & WhatsApp */}
+        {directContactNumber && (
+          <div
+            ref={phoneRef}
+            className="mt-6 sm:mt-10 flex items-center justify-center text-center"
+          >
+            <a
+              href={whatsAppHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              data-cursor="expand"
+              className="group inline-flex items-center gap-2.5 sm:gap-3 font-mono text-xs sm:text-sm lg:text-[15px] uppercase tracking-[0.2em] text-copy-secondary hover:text-copy-primary transition-colors duration-300"
+              aria-label={`Direct contact and WhatsApp: ${directContactNumber}`}
+            >
+              <span className="opacity-70 group-hover:opacity-100 transition-opacity">
+                DIRECT / WHATSAPP:
+              </span>
+              <span className="text-copy-primary font-medium group-hover:text-brand underline underline-offset-4 decoration-surface-border transition-colors">
+                {directContactNumber}
+              </span>
+            </a>
+          </div>
+        )}
       </div>
 
-      {/* Asymmetrical Anchor: Minimal Borderless Contact Form (Bottom-Right) */}
+      {/* Centered Minimal Contact Form */}
       <div
         ref={formContainerRef}
-        className="relative z-10 w-full flex justify-center md:justify-end mt-auto pt-8 sm:pt-12 lg:pt-14"
+        className="relative z-10 w-full flex flex-col items-center justify-center pt-8 sm:pt-12 lg:pt-14 pb-8 sm:pb-12"
       >
-        <div className="w-full max-w-lg lg:max-w-[32rem] xl:max-w-[36rem] space-y-5 sm:space-y-6">
+        <div className="w-full max-w-lg lg:max-w-xl mx-auto space-y-5 sm:space-y-6">
           {formStatus === "submitted" ? (
             <div
               role="status"
@@ -205,7 +355,7 @@ export function ContactSection({
               className="p-6 sm:p-7 rounded-none border border-surface-border bg-surface text-left space-y-3.5"
             >
               <p className="font-mono text-xs sm:text-sm uppercase tracking-[0.2em] text-brand">
-                {"INQUIRY TRANSMITTED //"}
+                INQUIRY RECEIVED
               </p>
               <p className="text-sm sm:text-base text-copy-primary font-serif leading-relaxed">
                 Thank you. Your inquiry has been received. Our studio will connect within 24 business
@@ -215,9 +365,9 @@ export function ContactSection({
                 type="button"
                 onClick={handleReset}
                 data-cursor="expand"
-                className="font-mono text-[11px] sm:text-xs uppercase tracking-[0.2em] text-copy-secondary hover:text-copy-primary underline underline-offset-4"
+                className="font-mono text-[11px] sm:text-xs uppercase tracking-[0.2em] text-copy-secondary hover:text-copy-primary underline underline-offset-4 transition-colors"
               >
-                [ Send Another Message ]
+                Send Another Message
               </button>
             </div>
           ) : (
@@ -301,6 +451,31 @@ export function ContactSection({
             </form>
           )}
         </div>
+
+        {/* Linked Social Media Icons directly below centered form */}
+        {socialLinks && socialLinks.length > 0 && (
+          <div
+            ref={socialsRef}
+            className="mt-10 sm:mt-12 flex flex-col items-center justify-center gap-3 text-center"
+          >
+            <div className="flex items-center justify-center gap-4 sm:gap-6">
+              {socialLinks.map((item) => (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-cursor="expand"
+                  aria-label={item.label}
+                  title={item.label}
+                  className="group flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-full border border-surface-border/50 hover:border-brand text-copy-secondary hover:text-brand bg-transparent hover:bg-surface/50 transition-all duration-300"
+                >
+                  {renderSocialIcon(item.icon)}
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </section>
   );

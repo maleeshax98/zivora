@@ -8,9 +8,22 @@ Phase 2: CMS Integration & Content Modeling
 
 ## Current Goal
 
-Packages Page: Initial Setup & Category-Based Package Showcase (`context/feature-specs/packages/01-initial-setup.md`) completed. Awaiting user review and next feature specification.
+Feature Spec 16: Dedicated Contact Page (`context/feature-specs/contact/01-initial.md`) completed with centered minimal form and linked social media icons. Awaiting user review and next feature specification.
 
 ## Completed
+
+- Feature Spec 16: Dedicated Contact Page (`context/feature-specs/contact/01-initial.md`):
+  - Created dedicated route `app/contact/page.tsx` mounting `<ContactSection />` and `<FooterSection />` with SEO metadata
+  - References the file named "ZIVORA" verbatim to align with the broader project architecture
+  - Layout & Positioning: Full-viewport container (`min-h-[100dvh]`) leveraging the whitespace design principle to create an expansive, high-end editorial atmosphere
+  - Center Focus: Massive, fluid typography call-to-action ("LET'S TALK.") occupying the absolute visual center of the viewport (`clamp(3.5rem, 14vw, 17.5rem)`) with italicized brand accent styling
+  - Direct Contact Info: Prominently displayed direct contact and WhatsApp number (**+94 77 051 2373**) positioned directly below the central headline with elegant secondary muted typography tokens and a functional `wa.me` link (`https://wa.me/94770512373`)
+  - Centered Form Integration: Minimal, borderless contact form horizontally centered within the layout (`max-w-lg lg:max-w-xl mx-auto`), positioned below the typography and direct contact info
+  - Form Fields & Styling: Plain text inputs with subtle bottom hairline borders only (`NAME / STUDIO *`, `EMAIL ADDRESS *`, `BRIEF SCOPE OR TIMELINE (OPTIONAL)`), muted secondary typography tokens, and a clean text-based submit button (`SEND INQUIRY ->`) aligned to the bottom right of the form block
+  - Linked Social Media Icons: Elegantly integrated stroke-based icons adhering to the project's icon library (`lucide-react` / stroke geometry for Instagram, YouTube, WhatsApp via `MessageCircle`, and Email via `Mail`), arranged in a balanced row directly below the centered form with smooth hover transitions, touch-friendly hit areas, and `data-cursor="expand"`
+  - Cleaned up submission confirmation state: eliminated artificial robotic symbols and bracketed fillers (`INQUIRY RECEIVED` and `Send Another Message`) for an authentic, human editorial feel
+  - Motion (GSAP): Staggered `ScrollTrigger` entrance animation with `gsap.matchMedia()` revealing the headline, phone number, centered form, and social media icons with subtle vertical translation, paired with accessible static fallback for `prefers-reduced-motion: reduce`
+  - Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`) confirming static route generation (`○ /contact`), and Sanity Studio build (`sanity build`)
 
 - Packages Page: Category-Based Package Showcase, Faded Category Hero & Shareable URLs (`context/feature-specs/packages/01-initial-setup.md`):
   - Created dynamic Packages page route `app/packages/page.tsx` with `<Suspense>` boundary, `<PackagesGallery />`, and `<FooterSection />`
