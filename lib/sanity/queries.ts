@@ -138,4 +138,44 @@ export const WORKS_CATEGORY_TOTAL_COUNT_QUERY = defineQuery(`
   count(*[_type == "album" && defined(slug.current) && category->slug.current == $categorySlug])
 `)
 
+export const PACKAGES_BY_CATEGORY_QUERY = defineQuery(`
+  *[_type == "package" && category->slug.current == $categorySlug] | order(order asc, _createdAt asc){
+    _id,
+    title,
+    slug,
+    price,
+    deliverables,
+    isHighlited,
+    badge,
+    order,
+    category->{
+      _id,
+      title,
+      slug,
+      description,
+      coverImage
+    }
+  }
+`)
+
+export const PACKAGES_QUERY = defineQuery(`
+  *[_type == "package"] | order(order asc, _createdAt asc){
+    _id,
+    title,
+    slug,
+    price,
+    deliverables,
+    isHighlited,
+    badge,
+    order,
+    category->{
+      _id,
+      title,
+      slug,
+      description,
+      coverImage
+    }
+  }
+`)
+
 

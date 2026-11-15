@@ -1655,17 +1655,51 @@
 - Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), and Next.js production build (`next build --webpack`), confirming all dynamic PPR routes build cleanly without hardcoded static params.
 - Updated `zivora/context/progress-tracker.md` to completed.
 
-## Session: 2026-11-15 — Album Description Schema Update (Portable Text to Text String)
+## Session: 2026-11-15 — Packages Page: Category-Based Showcase, Faded Category Hero & Shareable URLs (Feature Spec 01)
 
 ### 1. Session Summary
 
-- Schema change in `studio/schemaTypes/album.ts`: updated `description` field from array of blocks (Portable Text) to `type: 'text', rows: 3, validation: (rule) => rule.required()`.
-- Extracted updated schema (`sanity schemas extract --force`) and regenerated types in `zivora/sanity.types.ts` via `sanity typegen generate`.
-- Updated `SingleWorkGallery.tsx` frontend component:
-  - Consumed `description` directly as a string (`typeof album?.description === 'string' ? album.description.trim() : ...`), maintaining defensive fallback for legacy blocks.
-  - Used in both the cinematic intro sequence and the centered header block.
-- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`), and Sanity Studio build (`sanity build`).
+- Read `zivora/context/feature-specs/packages/01-initial-setup.md`, updated `zivora/context/progress-tracker.md` to in-progress, and implemented the Packages page exactly as specified.
+- Implemented `zivora/app/packages/page.tsx` with `<Suspense fallback={null}>` boundary, metadata, and mounted `<PackagesGallery />` alongside `<FooterSection />`.
+- Created `zivora/components/sections/PackagesGallery.tsx` (`"use client"`) with direct named and default exports (zero barrel files):
+  - Category navigation bar at the top with responsive horizontal scroll and active brand underline indicator.
+  - Active category maintained in URL query parameter (e.g. `?category=wedding-photography`) so the filtered view is shareable and deep-linkable.
+  - Category cover hero: displays active category cover image (`opacity-40 dark:opacity-35`) with multi-directional gradient overlays (`from-background via-background/60 to-transparent`, `from-background via-transparent to-background`, and edge fades) seamlessly melting into the canvas, rendering the category name directly on top in editorial serif typography (`text-[clamp(2.5rem,1.8rem+3.2vw,5.5rem)]`).
+  - Package cards: responsive grid (`grid-cols-1 md:grid-cols-2 lg:grid-cols-3`) displaying package title, formatted price (or "Custom Quote"), badge, deliverables list with Lucide check icons, and direct WhatsApp inquiry integration (`https://wa.me/94770512373` with pre-filled package and category details opening in a new tab, per user instruction replacing the contact page redirect).
+  - Highlighting: cards with `isHighlited: true` receive elevated brand styling (`border-2 border-brand/90 shadow-[0_8px_32px_rgba(181,155,126,0.14)]`), "FEATURED" indicator, and filled brand button.
+  - Empty state: clean editorial message for categories without published packages with direct WhatsApp inquiry (`Inquire on WhatsApp`) and contact form fallback.
+  - Minimal hairline loading indicator (`TopLoadingBar`) at the top of the viewport.
+- Defined `PACKAGES_BY_CATEGORY_QUERY` and `PACKAGES_QUERY` in `zivora/lib/sanity/queries.ts`.
+- Ran Sanity TypeGen in `studio/` generating `PACKAGES_BY_CATEGORY_QUERY_RESULT` and client overloads in `zivora/sanity.types.ts`.
+- Created Server Actions `fetchPackageCategoriesAction` and `fetchPackagesByCategoryAction(categorySlug)` in `zivora/app/packages/actions.ts`.
+- Verified TypeScript compilation (`tsc --noEmit`), ESLint (0 errors, 0 warnings), Next.js production build (`next build --webpack`) confirming static route generation for `/packages`, and Sanity Studio build (`sanity build`).
 - Updated `zivora/context/progress-tracker.md` to completed.
+
+### 2. Architectural & Engineering Decisions
+
+- **Derived URL Category State**: Derived `activeCategorySlug` directly from `searchParams.get("category")` falling back to `categories[0]?.slug`, avoiding unnecessary `useState` synchronization inside `useEffect` and complying with React 19's `react-hooks/set-state-in-effect` rule.
+- **Next.js 16 Suspense Boundary for `useSearchParams`**: Wrapped `<PackagesGallery />` inside `<Suspense fallback={null}>` in `app/packages/page.tsx`, allowing the page shell and layout to statically prerender (`○ /packages`) while dynamic search params hydrate cleanly on the client without hydration mismatch or CSR de-optimization.
+- **Multi-Directional Faded Cover Gradient**: Preserved the exact aesthetic formula established in `WorksGallery.tsx`: vertical bottom-to-top (`from-background via-background/60 to-transparent`), top-to-bottom (`from-background via-transparent to-background`), horizontal (`from-background via-transparent to-background`), and ambient scrim (`bg-background/25`), ensuring cover images dissolve smoothly into the canvas regardless of theme.
+
+### 3. Implementation State
+
+- `zivora/lib/sanity/queries.ts`: Added `PACKAGES_BY_CATEGORY_QUERY` and `PACKAGES_QUERY`.
+- `zivora/sanity.types.ts`: Regenerated types via `sanity typegen generate`.
+- `zivora/app/packages/actions.ts`: Created Server Actions for package and category fetching.
+- `zivora/components/sections/PackagesGallery.tsx`: Created client component with category navigation, faded cover hero, responsive package cards, highlighted card treatment, and empty states.
+- `zivora/app/packages/page.tsx`: Created route page with `<Suspense>` wrapper and metadata.
+- `zivora/context/progress-tracker.md`: Updated to completed.
+- Verification:
+  - `pnpm -C zivora exec tsc --noEmit` (0 errors)
+  - `pnpm -C zivora run lint` (0 errors, 0 warnings)
+  - `pnpm -C zivora run build` (`next build --webpack` passed, 0 errors, `/packages` generated as static route)
+  - `pnpm -C studio run build` (`sanity build` passed, 0 errors)
+
+### 4. Continuation Context & Next Steps
+
+- Packages page `/packages` is fully implemented and operational with live Sanity Content Lake connectivity.
+- Awaiting user direction for the next task or feature specification.
+
 
 
 

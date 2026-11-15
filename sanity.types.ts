@@ -431,6 +431,82 @@ export type WORKS_CATEGORY_ALBUMS_QUERY_RESULT = Array<{
 // Query: count(*[_type == "album" && defined(slug.current) && category->slug.current == $categorySlug])
 export type WORKS_CATEGORY_TOTAL_COUNT_QUERY_RESULT = number;
 
+// Source: ../zivora/lib/sanity/queries.ts
+// Variable: PACKAGES_BY_CATEGORY_QUERY
+// Query: *[_type == "package" && category->slug.current == $categorySlug] | order(order asc, _createdAt asc){    _id,    title,    slug,    price,    deliverables,    isHighlited,    badge,    order,    category->{      _id,      title,      slug,      description,      coverImage    }  }
+export type PACKAGES_BY_CATEGORY_QUERY_RESULT = Array<{
+  _id: string;
+  title: string | null;
+  slug: Slug | null;
+  price: string | null;
+  deliverables: Array<string> | null;
+  isHighlited: boolean | null;
+  badge: string | null;
+  order: number | null;
+  category: {
+    _id: string;
+    title: string | null;
+    slug: Slug | null;
+    description: Array<{
+      children?: Array<{
+        marks?: Array<string>;
+        text?: string;
+        _type: "span";
+        _key: string;
+      }>;
+      style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
+      listItem?: "bullet" | "number";
+      markDefs?: Array<{
+        href?: string;
+        _type: "link";
+        _key: string;
+      }>;
+      level?: number;
+      _type: "block";
+      _key: string;
+    }> | null;
+    coverImage: string | null;
+  } | null;
+}>;
+
+// Source: ../zivora/lib/sanity/queries.ts
+// Variable: PACKAGES_QUERY
+// Query: *[_type == "package"] | order(order asc, _createdAt asc){    _id,    title,    slug,    price,    deliverables,    isHighlited,    badge,    order,    category->{      _id,      title,      slug,      description,      coverImage    }  }
+export type PACKAGES_QUERY_RESULT = Array<{
+  _id: string;
+  title: string | null;
+  slug: Slug | null;
+  price: string | null;
+  deliverables: Array<string> | null;
+  isHighlited: boolean | null;
+  badge: string | null;
+  order: number | null;
+  category: {
+    _id: string;
+    title: string | null;
+    slug: Slug | null;
+    description: Array<{
+      children?: Array<{
+        marks?: Array<string>;
+        text?: string;
+        _type: "span";
+        _key: string;
+      }>;
+      style?: "blockquote" | "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "normal";
+      listItem?: "bullet" | "number";
+      markDefs?: Array<{
+        href?: string;
+        _type: "link";
+        _key: string;
+      }>;
+      level?: number;
+      _type: "block";
+      _key: string;
+    }> | null;
+    coverImage: string | null;
+  } | null;
+}>;
+
 // Query TypeMap
 declare global {
   interface SanityQueries {
@@ -444,6 +520,8 @@ declare global {
     '\n  count(*[_type == "album" && defined(slug.current)])\n': WORKS_TOTAL_COUNT_QUERY_RESULT;
     '\n  *[_type == "album" && defined(slug.current) && category->slug.current == $categorySlug] | order(publishedAt desc, _createdAt desc)[$start...$end]{\n    _id,\n    title,\n    slug,\n    description,\n    eventDate,\n    cloudinaryFolderName,\n    coverImage,\n    youtubeVideoLinks,\n    publishedAt,\n    category->{\n      _id,\n      title,\n      slug\n    }\n  }\n': WORKS_CATEGORY_ALBUMS_QUERY_RESULT;
     '\n  count(*[_type == "album" && defined(slug.current) && category->slug.current == $categorySlug])\n': WORKS_CATEGORY_TOTAL_COUNT_QUERY_RESULT;
+    '\n  *[_type == "package" && category->slug.current == $categorySlug] | order(order asc, _createdAt asc){\n    _id,\n    title,\n    slug,\n    price,\n    deliverables,\n    isHighlited,\n    badge,\n    order,\n    category->{\n      _id,\n      title,\n      slug,\n      description,\n      coverImage\n    }\n  }\n': PACKAGES_BY_CATEGORY_QUERY_RESULT;
+    '\n  *[_type == "package"] | order(order asc, _createdAt asc){\n    _id,\n    title,\n    slug,\n    price,\n    deliverables,\n    isHighlited,\n    badge,\n    order,\n    category->{\n      _id,\n      title,\n      slug,\n      description,\n      coverImage\n    }\n  }\n': PACKAGES_QUERY_RESULT;
   }
 }
 // Lets @sanity/client releases that predate the global registry read it too

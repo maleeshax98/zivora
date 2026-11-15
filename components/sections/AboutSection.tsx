@@ -26,7 +26,7 @@ export interface AboutSectionProps {
 }
 
 const DEFAULT_PORTRAIT_URL =
-  "https://res.cloudinary.com/pso8u1zy/image/upload/v1794419553/ij0uyatmtd17wz1jdosz.jpg";
+  "https://res.cloudinary.com/pso8u1zy/image/upload/v1794707520/ggu1avmmko3s07ptylre.jpg";
 
 const DEFAULT_PARAGRAPHS = [
   "Based between metropolitan architectures and quiet coastal landscapes, my work explores the interplay of natural light, raw texture, and human presence.",
